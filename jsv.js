@@ -15,7 +15,6 @@
 		PropertyAttributeValidators,
 		AttributeValidators,
 		JSONInstance,
-		JSONSchema,
 		JSONValidator,
 		exports = this;
 	
@@ -89,7 +88,7 @@
 		].join('');
 	}
 	
-	function getInstance(json, uri, schema, registry) {
+	function getInstance(json, uri, registry) {
 		var instance, type;
 		if (registry) {
 			type = typeOf(json);
@@ -99,45 +98,42 @@
 			}
 		}
 		
-		if (schema instanceof JSONSchema) {
-			return new JSONSchema(json, uri, schema, registry);
-		} else {
-			return new JSONInstance(json, uri, schema, registry);
-		}
+		return new JSONInstance(json, uri, registry);
 	}
 	
-	function error(report, instance, attr, message, details) {
+	function error(report, instance, schema, attr, message, details) {
 		report.errors.push({
 			path : report.path.join('.'),
 			uri : instance && instance.getURI(),
+			schemaUri : schema && schema.getURI(),
 			attribute : attr,
 			message : message,
 			details : details
 		});
 	}
 	
-	function validateChild(pji, property, cji, requiredSchema, report) {
+	function validateChild(pji, parentSchema, property, cji, childSchema, report) {
 		var attributes, attributeName;
 		report.path.push(property);
 		
 		if (cji) {
 			//ensure the child is valid against the schema
-			requiredSchema.validate(cji, report);
+			childSchema.validate(cji, report);
 		}
 		
 		//for each schema attribute of the parent instance
-		attributes = pji.getSchema().getProperties();
+		attributes = parentSchema.getProperties();
 		for (attributeName in attributes) {
 			if (attributes[attributeName] !== O[attributeName] && AttributePropertyValidators[attributeName] !== O[attributeName]) {
-				AttributePropertyValidators[attributeName](pji, property, cji, requiredSchema, report);
+				AttributePropertyValidators[attributeName](pji, parentSchema, property, cji, childSchema, report);
 			}
 		}
 		
 		//for each schema attribute of the child instance
-		attributes = requiredSchema.getProperties();
+		attributes = childSchema.getProperties();
 		for (attributeName in attributes) {
 			if (attributes[attributeName] !== O[attributeName] && PropertyAttributeValidators[attributeName] !== O[attributeName]) {
-				PropertyAttributeValidators[attributeName](pji, property, cji, requiredSchema, report);
+				PropertyAttributeValidators[attributeName](pji, parentSchema, property, cji, childSchema, report);
 			}
 		}
 		
@@ -215,7 +211,7 @@
 				}
 				
 				//if we get to this point, type is invalid
-				error(report, ji, 'type', 'Instance is not of the required type', requiredTypes);
+				error(report, ji, requiredSchema, 'type', 'Instance is not of the required type', requiredTypes);
 				return false;
 			}
 			//else, anything is allowed if no type is specified
@@ -231,7 +227,7 @@
 				for (key in propertySchemas) {
 					if (propertySchemas[key] !== O[key] && propertySchemas[key]) {
 						//ensure that instance property is valid
-						validateChild(ji, key, ji.getProperty(key), propertySchemas[key], report);
+						validateChild(ji, requiredSchema, key, ji.getProperty(key), propertySchemas[key], report);
 					}
 				}
 			}
@@ -249,15 +245,15 @@
 					for (x = 0, xl = properties.length; x < xl; ++x) {
 						schema = items[x] || additionalProperties;
 						if (schema !== false) {
-							validateChild(ji, x, properties[x], schema, report);
+							validateChild(ji, requiredSchema, x, properties[x], schema, report);
 						} else {
-							error(report, ji, 'additionalProperties', 'Additional items are not allowed', schema);
+							error(report, ji, requiredSchema, 'additionalProperties', 'Additional items are not allowed', schema);
 						}
 					}
 				} else {
 					schema = items || additionalProperties;
 					for (x = 0, xl = properties.length; x < xl; ++x) {
-						validateChild(ji, x, properties[x], schema, report);
+						validateChild(ji, requiredSchema, x, properties[x], schema, report);
 					}
 				}
 			}
@@ -273,28 +269,56 @@
 				for (key in properties) {
 					if (properties[key] !== O[key] && properties[key] && !propertySchemas[key]) {
 						if (additionalProperties !== false) {
-							validateChild(ji, key, ji.getProperty(key), additionalProperties, report);
+							validateChild(ji, requiredSchema, key, ji.getProperty(key), additionalProperties, report);
 						} else {
-							error(report, ji, 'additionalProperties', 'Additional properties are not allowed', additionalProperties);
+							error(report, ji, requiredSchema, 'additionalProperties', 'Additional properties are not allowed', additionalProperties);
 						}
 					}
 				}
 			}
 		},
 		
+		'minimum' : function (ji, requiredSchema, report) {  //& minimumCanEqual
+			var range;
+			if (ji.getPrimitiveType() === 'number') {
+				range = requiredSchema.range();
+				if (ji.getValue() < range.minimum) {
+					error(report, ji, requiredSchema, 'minimum', 'Number is less then the required minimum value', range.minimum);
+				}
+			}
+		},
+		
+		'maximum' : function (ji, requiredSchema, report) {  //& maximumCanEqual
+			var range;
+			if (ji.getPrimitiveType() === 'number') {
+				range = requiredSchema.range();
+				if (ji.getValue() > range.maximum) {
+					error(report, ji, requiredSchema, 'minimum', 'Number is greater then the required maximum value', range.maximum);
+				}
+			}
+		},
+		
+		'minItems' : function (ji, requiredSchema, report) {
+			var range;
+			if (ji.getPrimitiveType() === 'array') {
+				range = requiredSchema.range();
+				if (ji.getProperties().length < range.minItems) {
+					error(report, ji, requiredSchema, 'minItems', 'The number of items is less then the required minimum', range.minItems);
+				}
+			}
+		},
+		
+		'maxItems' : function (ji, requiredSchema, report) {
+			var range;
+			if (ji.getPrimitiveType() === 'array') {
+				range = requiredSchema.range();
+				if (ji.getProperties().length > range.maxItems) {
+					error(report, ji, requiredSchema, 'minItems', 'The number of items is greater then the required maximum', range.maxItems);
+				}
+			}
+		},
+		
 		/*
-		'minimum' : function (ji) {
-			if (ji.getPrimitiveType() === 'number' && ji.getValue() < ji.getSchema().range().min) {
-				return "Number is less then the required minimum value";
-			}
-		},  //& minimumCanEqual
-		
-		'maximum' : function (ji) {
-			if (ji.getPrimitiveType() === 'number' && ji.getValue() > ji.getSchema().range().max) {
-				return "Number is greater then the required maximum value";
-			}
-		},  //& maximumCanEqual
-		
 		'pattern' : 0,  //TODO
 		
 		'minLength' : function (ji) {
@@ -334,8 +358,6 @@
 	
 	AttributePropertyValidators = {
 		/*
-		'minItems' : 0,
-		'maxItems' : 0,
 		'uniqueItems' : 0,
 		'disallow' : 0
 		*/
@@ -347,14 +369,23 @@
 	
 	PropertyAttributeValidators = {
 		
-		'optional' : function (pji, property, cji, requiredSchema, report) {
-			if (!requiredSchema.optional() && !cji) {
-				error(report, cji, 'optional', "Property is required", false);
+		'optional' : function (pji, parentSchema, property, cji, childSchema, report) {
+			if (!childSchema.optional() && !cji) {
+				error(report, cji, childSchema, 'optional', "Property is required", false);
+			}
+		},
+		
+		'requires' : function (pji, parentSchema, property, cji, childSchema, report) {
+			var requires = childSchema.requires();
+			if (typeof requires === 'string') {
+				if (!pji.getProperty(requires)) {
+					error(report, cji, childSchema, 'requires', 'Property requires sibling property "' + requires + '"', requires);
+				}
+			} else if (requires instanceof JSONInstance && requires.getPrimitiveType() === 'object') {
+				requires.validate(pji, report);
 			}
 		}
-		/*,
-		'requires' : 0
-		*/
+		
 	};
 	
 	/*
@@ -397,12 +428,11 @@
 	 * JSONInstance
 	 */
 	
-	JSONInstance = function (json, uri, schema, registry) {
+	JSONInstance = function (json, uri, registry) {
 		var key, x, xl, propertyUri;
 		
 		this._type = typeOf(json);
 		this._uri = uri ? (uri.indexOf('#') !== -1 ? uri : uri + '#') : 'urn:uuid:' + randomUUID() + '#';
-		this._schema = schema instanceof JSONSchema ? schema : EMPTY_SCHEMA;
 		this._registry = registry || new JSONRegistry();
 		
 		//register instance
@@ -413,7 +443,7 @@
 			this._value = {};
 			for (key in json) {
 				if (json[key] !== O[key] && json[key] !== undefined) {
-					this._value[key] = getInstance(json[key], this._uri + '.' + key, this.getSchemaOfProperty(key), this._registry);
+					this._value[key] = getInstance(json[key], this._uri + '.' + key, this._registry);
 				}
 			}
 			break;
@@ -422,7 +452,7 @@
 			this._value = [];
 			for (x = 0, xl = json.length; x < xl; ++x) {
 				if (json[x] !== undefined) {
-					this._value[x] = getInstance(json[x], this._uri + '.' + x, this.getSchemaOfProperty(x), this._registry);
+					this._value[x] = getInstance(json[x], this._uri + '.' + x, this._registry);
 				}
 			}
 			break;
@@ -440,6 +470,10 @@
 	};
 	
 	JSONInstance.prototype = {
+		
+		/*
+		 * Instance methods
+		 */
 		
 		getPrimitiveType : function () {
 			return this._type;
@@ -504,7 +538,9 @@
 		},
 		
 		setProperty : function (key, value) {
-			this._value[key] = value instanceof JSONInstance ? value : getInstance(value, this.getURI() + '.' + key, this.getSchemaOfProperty(key), this._registry);
+			if (value instanceof JSONInstance) {
+				this._value[key] = value;
+			}
 		},
 		
 		setPropertyByPath : function (path, value) {
@@ -531,26 +567,23 @@
 			return this._uri;
 		},
 		
-		getSchema : function () {
-			return this._schema || EMPTY_SCHEMA;
+		getRegistry : function () {
+			return this._registry;
 		},
 		
-		setSchema : function (schema) {
-			if (schema instanceof JSONSchema) {
-				this._schema = schema;
-			}
-		},
+		/*
+		 * Schema methods
+		 */
 		
-		getSchemaOfProperty : function (key) {
-			var type = this.getPrimitiveType(),
-				schema = this.getSchema(),
-				additionalProperties = schema.additionalProperties(),  //schema or false
+		getSchemaOfInstanceProperty : function (ji, key) {
+			var type = ji.getPrimitiveType(),
+				additionalProperties = this.additionalProperties(),  //schema or false
 				items;
 			
 			if (type === 'object') {
-				return schema.properties()[key] || additionalProperties;
+				return this.properties()[key] || additionalProperties;
 			} else if (type === 'array') {
-				items = schema.items();
+				items = this.items();
 				if (typeOf(items) === 'array') {
 					return items[key] || additionalProperties;
 				} else {
@@ -558,22 +591,6 @@
 				}
 			}
 		},
-		
-		getRegistry : function () {
-			return this._registry;
-		}
-		
-	};
-	
-	/*
-	 * JSONSchema
-	 */
-	
-	JSONSchema = function (json, uri, schema, registry) {
-		JSONInstance.call(this, json, uri, schema || JSONSCHEMA_SCHEMA, registry);
-	};
-	
-	JSONSchema.prototype = mixin(createObject(JSONInstance.prototype), {
 		
 		types : function () {
 			return toArray(this.getValueOfProperty('type'));
@@ -589,7 +606,7 @@
 			if (items && items.getPrimitiveType() === 'array') {
 				return items.getProperties();
 			} else {
-				return items || this.getSchema().properties()['items'].defaultValue();
+				return items || EMPTY_SCHEMA;
 			}
 		},
 		
@@ -602,12 +619,31 @@
 					return EMPTY_SCHEMA;
 				}
 			} else {
-				return ap || this.getSchema().properties()['additionalProperties'].defaultValue();
+				return ap || EMPTY_SCHEMA;
 			}
 		},
 		
 		optional : function () {
 			return this.getValueOfProperty('optional');
+		},
+		
+		requires : function () {
+			var requires = this.getProperty('requires');
+			if (requires && requires.getPrimitiveType() === 'string') {
+				return requires.getValue();
+			}
+			return requires;
+		},
+		
+		range : function () {
+			var minEqual = this.getValueOfProperty('minimumCanEqual'),
+				maxEqual = this.getValueOfProperty('maximumCanEqual');
+			return {
+				minimum : this.getValueOfProperty('minimum') + (typeof minEqual !== 'boolean' || minEqual ? 0 : 1),
+				maximum :this.getValueOfProperty('maximum') - (typeof minEqual !== 'boolean' || maxEqual ? 0 : 1),
+				minItems : this.getValueOfProperty('minItems') || 0,
+				maxItems : this.getValueOfProperty('maxItems')
+			};
 		},
 		
 		defaultValue : function () {
@@ -639,7 +675,7 @@
 		validate : function (ji, report) {
 			var schemaUri, uri, properties, key;
 			schemaUri = this.getURI();
-			ji = ji instanceof JSONInstance ? ji : getInstance(ji, null, this);
+			ji = ji instanceof JSONInstance ? ji : getInstance(ji);
 			uri = ji.getURI();
 			report = report || {
 				path : [],
@@ -666,7 +702,7 @@
 			return report;
 		}
 		
-	});
+	};
 	
 	/*
 	 * Constants
@@ -674,14 +710,13 @@
 	
 	GLOBAL_REGISTRY = new JSONRegistry();
 	
-	JSONSCHEMA_SCHEMA = new JSONSchema({}, 'http://json-schema.org/schema', null, GLOBAL_REGISTRY);
-	JSONSCHEMA_SCHEMA.setSchema(JSONSCHEMA_SCHEMA);
+	JSONSCHEMA_SCHEMA = new JSONInstance({}, 'http://json-schema.org/schema', GLOBAL_REGISTRY);
 	
-	function buildSchema(uri, clazz, json, schemaUri) {
+	function buildSchema(uri, json, schemaUri) {
 		var instance, uriSplit, prop, parentUri;
 		uri = 'http://json-schema.org/schema' + uri;
 		schemaUri = schemaUri && 'http://json-schema.org/schema' + schemaUri;
-		instance = json instanceof JSONInstance ? json : new clazz(json, uri, schemaUri && GLOBAL_REGISTRY.getInstanceByURI(schemaUri), GLOBAL_REGISTRY);
+		instance = json instanceof JSONInstance ? json : new JSONInstance(json, uri, GLOBAL_REGISTRY);
 		uriSplit = uri.split('.');
 		prop = uriSplit.pop();
 		parentUri = uriSplit.join('.');
@@ -699,62 +734,43 @@
 		GLOBAL_REGISTRY.getInstanceByURI(parentUri).setProperty(prop, schema);
 	}
 	
-	function setSchemaSchema(uri, schemaUri) {
-		var instance, schema;
-		uri = 'http://json-schema.org/schema' + uri;
-		schemaUri = 'http://json-schema.org/schema' + schemaUri;
-		instance = GLOBAL_REGISTRY.getInstanceByURI(uri);
-		schema = GLOBAL_REGISTRY.getInstanceByURI(schemaUri);
-		instance.setSchema(schema);
-	}
-	
 	//bootstrap JSON Schema schema
-	buildSchema('#.type', JSONInstance, "object", null);  //#.properties.type
-	buildSchema('#.properties', JSONInstance, {}, null);  //#.properties.properties
-	buildSchema('#.properties.type', JSONSchema, {}, '#');
-	buildSchema('#.properties.type.items', JSONSchema, {}, '#');
-	buildSchema('#.properties.type.items.type', JSONInstance, "string", '#.properties.type');
+	buildSchema('#.type', "object", null);  //#.properties.type
+	buildSchema('#.properties', {}, null);  //#.properties.properties
+	buildSchema('#.properties.type', {}, '#');
+	buildSchema('#.properties.type.items', {}, '#');
+	buildSchema('#.properties.type.items.type', "string", '#.properties.type');
 	buildSchemaRef('#.properties.type.additionalProperties', '#.properties.type.items');  //needed only by this validator for next rule
-	buildSchema('#.properties.type.type', JSONInstance, ["string", "array"], '#.properties.type');
-	buildSchema('#.properties.type.optional', JSONInstance, true, null);  //#.properties.optional
-	buildSchema('#.properties.type.default', JSONInstance, "any", null);  //#.properties.default
-	setSchemaSchema('#.type', '#.properties.type');
-	buildSchema('#.properties.properties', JSONSchema, {}, '#');
-	buildSchema('#.properties.properties.type', JSONInstance, "object", '#.properties.type');
+	buildSchema('#.properties.type.type', ["string", "array"], '#.properties.type');
+	buildSchema('#.properties.type.optional', true, null);  //#.properties.optional
+	buildSchema('#.properties.type.default', "any", null);  //#.properties.default
+	buildSchema('#.properties.properties', {}, '#');
+	buildSchema('#.properties.properties.type', "object", '#.properties.type');
 	buildSchemaRef('#.properties.properties.additionalProperties', '#');
-	buildSchema('#.properties.properties.optional', JSONInstance, true, null);  //#.properties.optional
-	buildSchema('#.properties.properties.default', JSONInstance, {}, null);  //#.properties.default
-	setSchemaSchema('#.properties', '#.properties.properties');
-	buildSchema('#.properties.items', JSONSchema, {}, '#');
-	buildSchema('#.properties.items.type', JSONInstance, ["object", "array"], '#.properties.type');
+	buildSchema('#.properties.properties.optional', true, null);  //#.properties.optional
+	buildSchema('#.properties.properties.default', {}, null);  //#.properties.default
+	buildSchema('#.properties.items', {}, '#');
+	buildSchema('#.properties.items.type', ["object", "array"], '#.properties.type');
 	buildSchemaRef('#.properties.items.properties', '#.properties');
 	buildSchemaRef('#.properties.items.items', '#');
-	buildSchema('#.properties.items.optional', JSONInstance, true, null);  //#.properties.optional
-	buildSchema('#.properties.items.default', JSONInstance, {}, null);  //#.properties.default
-	buildSchema('#.properties.optional', JSONSchema, {}, '#');
-	buildSchema('#.properties.optional.type', JSONInstance, "boolean", '#.properties.type');
-	buildSchema('#.properties.optional.optional', JSONInstance, true, '#.properties.optional');
-	buildSchema('#.properties.optional.default', JSONInstance, false, null);  //#.properties.default
-	setSchemaSchema('#.properties.type.optional', '#.properties.optional');
-	setSchemaSchema('#.properties.properties.optional', '#.properties.optional');
-	setSchemaSchema('#.properties.items.optional', '#.properties.optional');
-	buildSchema('#.properties.additionalProperties', JSONSchema, {}, '#');
-	buildSchema('#.properties.additionalProperties.type', JSONInstance, ["object", "boolean"], '#.properties.type');
+	buildSchema('#.properties.items.optional', true, null);  //#.properties.optional
+	buildSchema('#.properties.items.default', {}, null);  //#.properties.default
+	buildSchema('#.properties.optional', {}, '#');
+	buildSchema('#.properties.optional.type', "boolean", '#.properties.type');
+	buildSchema('#.properties.optional.optional', true, '#.properties.optional');
+	buildSchema('#.properties.optional.default', false, null);  //#.properties.default
+	buildSchema('#.properties.additionalProperties', {}, '#');
+	buildSchema('#.properties.additionalProperties.type', ["object", "boolean"], '#.properties.type');
 	buildSchemaRef('#.properties.additionalProperties.properties', '#.properties');
-	buildSchema('#.properties.additionalProperties.optional', JSONInstance, true, '#.properties.optional');
-	buildSchema('#.properties.additionalProperties.default', JSONInstance, {}, null);  //#.properties.default
-	buildSchema('#.properties.default', JSONSchema, {}, '#');
-	buildSchema('#.properties.default.type', JSONInstance, "any", '#.properties.type');
-	buildSchema('#.properties.default.optional', JSONInstance, true, '#.properties.optional');
-	setSchemaSchema('#.properties.type.default', '#.properties.default');
-	setSchemaSchema('#.properties.properties.default', '#.properties.default');
-	setSchemaSchema('#.properties.items.default', '#.properties.default');
-	setSchemaSchema('#.properties.optional.default', '#.properties.default');
-	setSchemaSchema('#.properties.additionalProperties.default', '#.properties.default');
-	buildSchema('#.optional', JSONInstance, true, '#.properties.optional');
-	buildSchema('#.default', JSONInstance, {}, '#.properties.default');
+	buildSchema('#.properties.additionalProperties.optional', true, '#.properties.optional');
+	buildSchema('#.properties.additionalProperties.default', {}, null);  //#.properties.default
+	buildSchema('#.properties.default', {}, '#');
+	buildSchema('#.properties.default.type', "any", '#.properties.type');
+	buildSchema('#.properties.default.optional', true, '#.properties.optional');
+	buildSchema('#.optional', true, '#.properties.optional');
+	buildSchema('#.default', {}, '#.properties.default');
 	
-	EMPTY_SCHEMA = new JSONSchema({}, 'http://json-schema.org/empty-schema', JSONSCHEMA_SCHEMA, GLOBAL_REGISTRY);
+	EMPTY_SCHEMA = new JSONInstance({}, 'http://json-schema.org/empty-schema', GLOBAL_REGISTRY);
 	
 	/*
 	 * JSONValidator
@@ -763,15 +779,14 @@
 	JSONValidator = {
 		
 		JSONInstance : JSONInstance,
-		JSONSchema : JSONSchema,
 		globalRegistry : GLOBAL_REGISTRY,
 		JSONSCHEMA_SCHEMA : JSONSCHEMA_SCHEMA,
 		EMPTY_SCHEMA : EMPTY_SCHEMA,
 		
 		validate : function (json, schema) {
 			var registry = new JSONRegistry(this.globalRegistry);
-			schema = schema instanceof JSONSchema ? schema : (schema ? getInstance(schema, null, JSONSCHEMA_SCHEMA, registry) : EMPTY_SCHEMA);
-			json = json instanceof JSONInstance ? json : getInstance(json, null, schema, registry); 
+			schema = schema instanceof JSONInstance ? schema : (schema ? getInstance(schema, null, registry) : EMPTY_SCHEMA);
+			json = json instanceof JSONInstance ? json : getInstance(json, null, registry); 
 			
 			return schema.validate(json);
 		}

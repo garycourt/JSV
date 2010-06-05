@@ -108,4 +108,62 @@ test("AdditionalProperties Validation", function () {
 	notEqual(JSONValidator.validate(['1', '2', '3'], { items : [ { type : 'string' }, { type : 'string' } ], additionalProperties : { type : 'number' } }).errors.length, 0);
 });
 
+test("Requires Validation", function () {
+	equal(JSONValidator.validate({ a : 1 }, { properties : { a : { requires : 'a' } } }).errors.length, 0);
+	equal(JSONValidator.validate({ a : 1, b : 2 }, { properties : { a : {}, b : { requires : 'a' } } }).errors.length, 0);
+	equal(JSONValidator.validate({ a : 1, b : 2 }, { properties : { a : { requires : 'b' }, b : { requires : 'a' } } }).errors.length, 0);
+	equal(JSONValidator.validate({ a : 1, b : 2 }, { properties : { b : { requires : { properties : { a : { type : 'number' } } } } } }).errors.length, 0);
+	
+	notEqual(JSONValidator.validate({ b : 2 }, { properties : { b : { requires : 'a' } } }).errors.length, 0);
+	notEqual(JSONValidator.validate({ a : 1, b : 2 }, { properties : { a : { requires : 'b' }, b : { requires : 'c' } } }).errors.length, 0);
+	notEqual(JSONValidator.validate({ b : 2 }, { properties : { b : { requires : { properties : { b : { type : 'string' } } } } } }).errors.length, 0);
+});
+
+test("Minimum/Maximum Validation", function () {
+	equal(JSONValidator.validate(0, {}).errors.length, 0);
+	equal(JSONValidator.validate(1, { minimum : 1, maximum : 10 }).errors.length, 0);
+	equal(JSONValidator.validate(5, { minimum : 1, maximum : 10 }).errors.length, 0);
+	equal(JSONValidator.validate(10, { minimum : 1, maximum : 10 }).errors.length, 0);
+	equal(JSONValidator.validate(1, { minimum : 1, maximum : 1 }).errors.length, 0);
+	
+	notEqual(JSONValidator.validate(0, { minimum : 1, maximum : 10 }).errors.length, 0);
+	notEqual(JSONValidator.validate(11, { minimum : 1, maximum : 10 }).errors.length, 0);
+});
+
+test("MinimumCanEqual/MaximumCanEqual Validation", function () {
+	//true
+	equal(JSONValidator.validate(0, { minimumCanEqual : true, maximumCanEqual : true }).errors.length, 0);
+	equal(JSONValidator.validate(1, { minimum : 1, maximum : 10, minimumCanEqual : true, maximumCanEqual : true }).errors.length, 0);
+	equal(JSONValidator.validate(5, { minimum : 1, maximum : 10, minimumCanEqual : true, maximumCanEqual : true  }).errors.length, 0);
+	equal(JSONValidator.validate(10, { minimum : 1, maximum : 10, minimumCanEqual : true, maximumCanEqual : true  }).errors.length, 0);
+	equal(JSONValidator.validate(1, { minimum : 1, maximum : 1, minimumCanEqual : true, maximumCanEqual : true  }).errors.length, 0);
+	
+	notEqual(JSONValidator.validate(0, { minimum : 1, maximum : 10, minimumCanEqual : true, maximumCanEqual : true  }).errors.length, 0);
+	notEqual(JSONValidator.validate(11, { minimum : 1, maximum : 10, minimumCanEqual : true, maximumCanEqual : true  }).errors.length, 0);
+	
+	//false
+	equal(JSONValidator.validate(0, { minimumCanEqual : false, maximumCanEqual : false }).errors.length, 0);
+	equal(JSONValidator.validate(5, { minimum : 1, maximum : 10, minimumCanEqual : false, maximumCanEqual : false  }).errors.length, 0);
+	
+	notEqual(JSONValidator.validate(1, { minimum : 1, maximum : 10, minimumCanEqual : false, maximumCanEqual : false }).errors.length, 0);
+	notEqual(JSONValidator.validate(10, { minimum : 1, maximum : 10, minimumCanEqual : false, maximumCanEqual : false  }).errors.length, 0);
+	notEqual(JSONValidator.validate(1, { minimum : 1, maximum : 1, minimumCanEqual : false, maximumCanEqual : false  }).errors.length, 0);
+	notEqual(JSONValidator.validate(0, { minimum : 1, maximum : 10, minimumCanEqual : false, maximumCanEqual : false  }).errors.length, 0);
+	notEqual(JSONValidator.validate(11, { minimum : 1, maximum : 10, minimumCanEqual : false, maximumCanEqual : false  }).errors.length, 0);
+});
+
+test("MinItems/MaxItems Validation", function () {
+	equal(JSONValidator.validate([], {}).errors.length, 0);
+	equal(JSONValidator.validate([1], { minItems : 1, maxItems : 3 }).errors.length, 0);
+	equal(JSONValidator.validate([1, 2], { minItems : 1, maxItems : 3 }).errors.length, 0);
+	equal(JSONValidator.validate([1, 2, 3], { minItems : 1, maxItems : 3 }).errors.length, 0);
+	
+	notEqual(JSONValidator.validate([], { minItems : 1, maxItems : 3 }).errors.length, 0);
+	notEqual(JSONValidator.validate([1, 2, 3, 4], { minItems : 1, maxItems : 3 }).errors.length, 0);
+});
+
+test("JSON Schema Validation", function () {
+	equal(JSONValidator.JSONSCHEMA_SCHEMA.validate(JSONValidator.JSONSCHEMA_SCHEMA).errors.length, 0);
+});
+
 //test("", function () {});

@@ -3,9 +3,8 @@
 	
 	"properties" : {
 		"type" : {
+			"type" : ["string", "array"],
 			"items" : {"type" : "string"},
-			"additionalProperties" : {"$ref" : "#.properties.type.items"},  //NEEDED ONLY BY BOOTSTRAP
-			"type" : ["string", "array"],   //MOVED HERE ON PURPOSE
 			"optional" : true,
 			"default" : "any"
 		},
@@ -38,6 +37,48 @@
 			"optional" : true,
 			"default" : {"$ref" : "http://json-schema.org/empty-schema#"},
 			"extends" : {"$ref" : "#"}  //ADD!!
+		},
+		
+		"requires" : {
+			"type" : ["string", "object"],
+			"properties" : {"$ref" : "#.properties"},
+			"optional" : true,
+			"extends" : {"$ref" : "#"}  //ADD!!
+		},
+		
+		"minimum" : {
+			"type" : "number",
+			"optional" : true
+		},
+		
+		"maximum" : {
+			"type" : "number",
+			"optional" : true
+		},
+		
+		"minimumCanEqual" : {
+			"type" : "boolean",
+			"optional" : true,
+			"requires" : "minimum",
+			"default" : true
+		},
+		
+		"maximumCanEqual" : {
+			"type" : "boolean",
+			"optional" : true,
+			"requires" : "maximum",
+			"default" : true
+		},
+		
+		"minItems" : {
+			"type" : "number",
+			"optional" : true,
+			"default" : 0
+		},
+		
+		"maxItems" : {
+			"type" : "number",
+			"optional" : true
 		},
 		
 		"default" : {
