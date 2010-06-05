@@ -1,0 +1,175 @@
+{
+	"type" : "object",
+	
+	"properties" : {
+		"type" : {
+			"items" : {"type" : "string"},
+			"additionalProperties" : {"$ref" : "#.properties.type.items"},  //NEEDED ONLY BY BOOTSTRAP
+			"type" : ["string", "array"],   //MOVED HERE ON PURPOSE
+			"optional" : true,
+			"default" : "any"
+		},
+		
+		"properties" : {
+			"type" : "object",
+			"additionalProperties" : {"$ref" : "#"},
+			"optional" : true,
+			"default" : {}
+		},
+		
+		"items" : {
+			"type" : ["object", "array"],
+			"properties" : {"$ref" : "#.properties"},
+			"items" : {"$ref" : "#"},
+			"optional" : true,
+			"default" : {"$ref" : "http://json-schema.org/empty-schema#"},
+			"extends" : {"$ref" : "#"}  //ADD!!
+		},
+		
+		"optional" : {
+			"type" : "boolean",
+			"optional" : true,
+			"default" : false
+		},
+		
+		"additionalProperties" : {
+			"type" : ["object", "boolean"],
+			"properties" : {"$ref" : "#.properties"},
+			"optional" : true,
+			"default" : {"$ref" : "http://json-schema.org/empty-schema#"},
+			"extends" : {"$ref" : "#"}  //ADD!!
+		},
+		
+		"default" : {
+			"type" : "any",
+			"optional" : true
+		}
+	},
+	
+	"optional" : true,
+	"default" : {"$ref" : "http://json-schema.org/empty-schema#"}
+}
+
+
+
+
+{"description":"This is the JSON Schema for JSON Schemas.",
+ "type":["object","array"],
+ "items":{
+     "type":"object",
+     "properties":{"$ref":"#.properties"},
+     "description":"When the schema is an array, it indicates that it is enforcing tuple typing. Each item in the instance array must correspond to the item in the schema array"},
+ "properties":{
+     "type":{
+     	"type":["string","array"],
+     	"items":{"$ref":"#.properties.type"},
+	"description":"This is a type definition value. This can be a simple type, or a union type",
+	"options":[{"value":"string"},{"value":"object"},{"value":"array"},{"value":"boolean"},{"value":"number"},{"value":"integer"},{"value":"null"},{"value":"any"}],
+	"unconstrained":true,
+	"optional":true,
+	"default":"any"},
+     "optional":{
+     	"type":"boolean",
+     	"description":"This indicates that the instance property in the instance object is not required.",
+	"optional":true,
+	"default":false},
+     "properties":{
+     	"type":"object",
+     	"additionalProperties":{"$ref":"#"},
+     	"description":"This is a definition for the properties of an object value",
+     	"optional":true,
+     	"default":{}
+     },
+     "items":{
+     	"type":"object",
+     	"properties":{"$ref":"#.properties"},
+     	"description":"When the value is an array, this indicates the schema to use to validate each item in an array",
+	"optional":true,
+	"default":{}},
+     "additionalProperties":{
+     	"type":["boolean","object"],
+     	"properties":{"$ref":"#.properties"},
+     	"description":"This provides a default property definition for all properties that are not explicitly defined in an object type definition.",
+	"optional":true,
+	"default":{}},
+     "minimum":{
+     	"type":"number",
+	"optional":true,
+     	"description":"This indicates the minimum value for the instance property when the type of the instance value is a number."},
+     "minimumCanEqual":{
+     	"type":"boolean",
+	"optional":true,
+     	"description":"If the minimum is defined, this indicates whether or not the instance property value can equal the minimum."},
+     "maximum":{
+     	"type":"number",
+	"optional":true,
+     	"description":"This indicates the maximum value for the instance property when the type of the instance value is a number."},
+     "maximumCanEqual":{
+     	"type":"boolean",
+	"optional":true,
+     	"description":"If the maximum is defined, this indicates whether or not the instance property value can equal the maximum."},
+     "pattern":{
+     	"type":"string",
+     	"format":"regex",
+     	"description":"When the instance value is a string, this provides a regular expression that a instance string value should match in order to be valid.",
+	"optional":true,
+	"default":".*"},
+     "maxLength" :{
+     	"type":"number",
+	"optional":true,
+     	"description":"When the instance value is a string, this indicates maximum length of the string."},
+     "minLength" :{
+     	"type":"number",
+	"optional":true,
+     	"description":"When the instance value is a string, this indicates minimum length of the string."},
+     "maxItems" :{
+     	"type":"number",
+	"optional":true,
+     	"description":"When the instance value is an array, this indicates maximum number of items."},
+     "minItems" :{
+     	"type":"number",
+	"optional":true,
+     	"description":"When the instance value is an array, this indicates minimum number of items."},
+     "enum" : {
+     	"type":"array",
+	"optional":true,
+     	"description":"This provides an enumeration of possible values that are valid for the instance property."},
+     "description":{
+     	"type":"string",
+	"optional":true,
+     	"description":"This provides a description of the purpose the instance property. The value can be a string or it can be an object with properties corresponding to various different instance languages (with an optional default property indicating the default description)."},
+     "title":{
+     	"type":"string",
+	"optional":true,
+     	"description":"This provides the title of the property"},
+     "requires":{
+     	"type":["string", "object"],
+     	"properties":{"$ref":"#.properties"},
+	"optional":true,
+     	"description":"indicates a required property or a schema that must be validated if this property is present"},
+     "format":{
+     	"type":"string",
+	"optional":true,
+     	"description":"This indicates what format the data is among some predefined formats which may include:\n\ndate - a string following the ISO format \naddress \nschema - a schema definition object \nperson \npage \nhtml - a string representing HTML"},
+     "default":{
+     	"type":"any",
+	"optional":true,
+     	"description":"This indicates the default for the instance property."},
+     "maxDecimal":{
+     	"type":"integer",
+	"optional":true,
+     	"description":"This indicates the maximum number of decimal places in a floating point number."},
+     "disallow":{
+     	"type":"object",
+     	"properties":{"$ref":"#"},
+     	"description":"This attribute may take the same values as the \"type\" attribute, however if the instance matches the type or if this value is an array and the instance matches any type or schema in the array, than this instance is not valid.",
+	"optional":true},
+     "extends":{
+     	"type":"object",
+     	"properties":{"$ref":"#.properties"},
+     	"description":"This indicates the schema extends the given schema. All instances of this schema must be valid to by the extended schema also.",
+	"optional":true,
+	"default":{}}
+   },
+   "schema":{"$ref":"http://json-schema.org/hyper-schema"}
+}
