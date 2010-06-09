@@ -11,7 +11,6 @@
 		
 		TypeValidators,
 		FormatValidators,
-		AttributePropertyValidators,
 		PropertyAttributeValidators,
 		AttributeValidators,
 		JSONInstance,
@@ -41,6 +40,16 @@
 			}
 		}
 		return obj;
+	}
+	
+	function mapObject(obj, func, scope) {
+		var newObj = {}, key;
+		for (key in obj) {
+			if (obj[key] !== O[key]) {
+				newObj[key] = func.call(scope, obj[key], key, obj);
+			}
+		}
+		return newObj;
 	}
 	
 	function toArray(o) {
@@ -119,14 +128,6 @@
 		if (cji) {
 			//ensure the child is valid against the schema
 			childSchema.validate(cji, report);
-		}
-		
-		//for each schema attribute of the parent instance
-		attributes = parentSchema.getProperties();
-		for (attributeName in attributes) {
-			if (attributes[attributeName] !== O[attributeName] && AttributePropertyValidators[attributeName] !== O[attributeName]) {
-				AttributePropertyValidators[attributeName](pji, parentSchema, property, cji, childSchema, report);
-			}
 		}
 		
 		//for each schema attribute of the child instance
@@ -211,7 +212,7 @@
 				}
 				
 				//if we get to this point, type is invalid
-				error(report, ji, requiredSchema, 'type', 'Instance is not of the required type', requiredTypes);
+				error(report, ji, requiredSchema, 'type', 'Instance is not a required type', requiredTypes);
 				return false;
 			}
 			//else, anything is allowed if no type is specified
@@ -282,7 +283,7 @@
 			var range;
 			if (ji.getPrimitiveType() === 'number') {
 				range = requiredSchema.range();
-				if (ji.getValue() < range.minimum) {
+				if (ji.getValue() < range.minimum || (!range.minimumCanEqual && ji.getValue() === range.minimum)) {
 					error(report, ji, requiredSchema, 'minimum', 'Number is less then the required minimum value', range.minimum);
 				}
 			}
@@ -292,8 +293,8 @@
 			var range;
 			if (ji.getPrimitiveType() === 'number') {
 				range = requiredSchema.range();
-				if (ji.getValue() > range.maximum) {
-					error(report, ji, requiredSchema, 'minimum', 'Number is greater then the required maximum value', range.maximum);
+				if (ji.getValue() > range.maximum || (!range.maximumCanEqual && ji.getValue() === range.maximum)) {
+					error(report, ji, requiredSchema, 'maximum', 'Number is greater then the required maximum value', range.maximum);
 				}
 			}
 		},
@@ -318,49 +319,124 @@
 			}
 		},
 		
-		/*
-		'pattern' : 0,  //TODO
-		
-		'minLength' : function (ji) {
-			if (ji.getPrimitiveType() === 'string' && ji.getValue().length < ji.getSchema().range().min) {
-				return "String is less then the required minimum length";
+		'uniqueItems' : function (ji, requiredSchema, report) {
+			var value, x, xl, y, yl;
+			if (ji.getPrimitiveType() === 'array' && requiredSchema.uniqueItems()) {
+				value = ji.getProperties();
+				for (x = 0, xl = value.length - 1; x < xl; ++x) {
+					for (y = x + 1, yl = value.length; y < yl; ++y) {
+						if (value[x].equals(value[y])) {
+							error(report, ji, requiredSchema, 'uniqueItems', 'Array can only contain unique items', { x : x, y : y });
+						}
+					}
+				}
 			}
 		},
 		
-		'maxLength' : function (ji) {
-			if (ji.getPrimitiveType() === 'string' && ji.getValue().length > ji.getSchema().range().max) {
-				return "String is greater then the required maximum length";
+		'pattern' : function (ji, requiredSchema, report) {
+			var pattern;
+			try {
+				pattern = requiredSchema.pattern();
+				if (ji.getPrimitiveType() === 'string' && pattern && !pattern.test(ji.getValue())) {
+					error(report, ji, requiredSchema, 'pattern', 'String does not match pattern', pattern.toString());
+				}
+			} catch (e) {
+				error(report, ji, requiredSchema, 'pattern', 'Invalid pattern', e);
 			}
 		},
 		
-		'enum' : function (ji) {
-			if (!ji.getSchema().enumerations().some(ji.equals.bind(ji))) {
-				return "Instance is not one of the possible enum values";
+		'minLength' : function (ji, requiredSchema, report) {
+			var range;
+			if (ji.getPrimitiveType() === 'string') {
+				range = requiredSchema.range();
+				if (ji.getValue().length < range.minLength) {
+					error(report, ji, requiredSchema, 'minLength', 'String is less then the required minimum length', range.minLength);
+				}
 			}
 		},
 		
-		'format' : function (ji) {
-			var format = ji.getSchema().format();
-			if (hasProperty(this.FormatValidators, format) && !this.FormatValidators[format].call(this, ji)) {
-				return "Instance value is not of format '" + format + "'";
+		'maxLength' : function (ji, requiredSchema, report) {
+			var range;
+			if (ji.getPrimitiveType() === 'string') {
+				range = requiredSchema.range();
+				if (ji.getValue().length > range.maxLength) {
+					error(report, ji, requiredSchema, 'maxLength', 'String is greater then the required maximum length', range.maxLength);
+				}
 			}
 		},
 		
-		'divisibleBy' : 0,
-		'disallow' : 0,
-		'extends' : 0  //?
-		*/
-	};
-	
-	/*
-	 * AttributePropertyValidators
-	 */
-	
-	AttributePropertyValidators = {
-		/*
-		'uniqueItems' : 0,
-		'disallow' : 0
-		*/
+		'enum' : function (ji, requiredSchema, report) {
+			var enums = requiredSchema.enums();
+			if (enums) {
+				for (x = 0, xl = enums.length; x < xl; ++x) {
+					if (ji.equals(enums[x])) {
+						return true;
+					}
+				}
+				error(report, ji, requiredSchema, 'enum', 'Instance is not one of the possible values', requiredSchema.getValueOfProperty('enum'));
+			}
+		},
+		
+		'format' : function (ji, requiredSchema, report) {
+			var format;
+			if (ji.getPrimitiveType() === 'string') {
+				format = requiredSchema.format();
+				if (FormatValidators[format] !== O[format] && typeof FormatValidators[format] === 'function' && !FormatValidators[format].call(this, ji, report)) {
+					error(report, ji, requiredSchema, 'format', 'String is not in the required format', format);
+				}
+			}
+		},
+		
+		'divisibleBy' : function (ji, requiredSchema, report) {
+			var divisor;
+			if (ji.getPrimitiveType() === 'number') {
+				divisor = requiredSchema.divisibleBy();
+				if (divisor === 0) {
+					error(report, ji, requiredSchema, 'divisibleBy', 'Nothing is divisible by 0', divisor);
+				} else if (divisor !== 1 && ((ji.getValue() / divisor) % 1) !== 0) {
+					error(report, ji, requiredSchema, 'divisibleBy', 'Number is not divisible by ' + divisor, divisor);
+				}
+			}
+		},
+		
+		
+		'disallow' : function (ji, requiredSchema, report) {
+			var disallowedTypes = requiredSchema.disallows(),
+				x, xl, key;
+			
+			//for instances that are required to be a certain type
+			if (disallowedTypes && disallowedTypes.length) {
+				//ensure that type matches for at least one of the required types
+				for (x = 0, xl = disallowedTypes.length; x < xl; ++x) {
+					key = disallowedTypes[x];
+					if (TypeValidators[key] !== O[key] && typeof TypeValidators[key] === 'function') {
+						if (TypeValidators[key](ji, report)) {
+							error(report, ji, requiredSchema, 'disallow', 'Instance is a disallowed type', disallowedTypes);
+							return false;
+						}
+					} 
+					/*
+					else {
+						error(report, ji, requiredSchema, 'disallow', 'Instance may be a disallowed type', disallowedTypes);
+						return false;
+					}
+					*/
+				}
+				
+				//if we get to this point, type is valid
+				return true;
+			}
+			//else, everything is allowed if no disallowed types are specified
+			return true;
+		},
+		
+		'extends' : function (ji, requiredSchema, report) {
+			var extensions = requiredSchema.getExtendedSchemas();
+			for (x = 0, xl = extensions.length; x < xl && !report.errors.length; ++x) {
+				extensions[x].validate(ji, report);
+			}
+		}
+		
 	};
 	
 	/*
@@ -571,6 +647,22 @@
 			return this._registry;
 		},
 		
+		equals : function (o) {
+			var type = this.getPrimitiveType(),
+				instance = o instanceof JSONInstance ? o : this._registry.getInstanceByValue(o),
+				instanceType = instance ? instance.getPrimitiveType() : typeOf(o);
+			
+			if (type !== instanceType) {
+				return false;
+			} else if (instance && this.getURI() === instance.getURI()) {
+				return true;
+			} else if (type !== 'object' && type !== 'array') {
+				return this.getValue() === (instance ? instance.getValue() : o);
+			} else {
+				return false;
+			}
+		},
+	
 		/*
 		 * Schema methods
 		 */
@@ -639,19 +731,99 @@
 			var minEqual = this.getValueOfProperty('minimumCanEqual'),
 				maxEqual = this.getValueOfProperty('maximumCanEqual');
 			return {
-				minimum : this.getValueOfProperty('minimum') + (typeof minEqual !== 'boolean' || minEqual ? 0 : 1),
-				maximum :this.getValueOfProperty('maximum') - (typeof minEqual !== 'boolean' || maxEqual ? 0 : 1),
+				minimum : this.getValueOfProperty('minimum'),
+				maximum :this.getValueOfProperty('maximum'),
+				minimumCanEqual : typeof minEqual !== 'boolean' || minEqual,
+				maximumCanEqual : typeof maxEqual !== 'boolean' || maxEqual,
 				minItems : this.getValueOfProperty('minItems') || 0,
-				maxItems : this.getValueOfProperty('maxItems')
+				maxItems : this.getValueOfProperty('maxItems'),
+				minLength : this.getValueOfProperty('minLength') || 0,
+				maxLength : this.getValueOfProperty('maxLength'),
 			};
 		},
 		
-		defaultValue : function () {
-			return this.getProperty('default');
+		uniqueItems : function () {
+			return this.getValueOfProperty('uniqueItems');
 		},
 		
-		extensions : function () {
-			return [];  //TODO
+		pattern : function () {
+			var pattern = this.getValueOfProperty('pattern');
+			if (pattern) {
+				return new RegExp(pattern);
+			}
+		},
+		
+		enums : function () {
+			var enums = this.getProperty('enum');
+			if (enums && enums.getPrimitiveType() === 'array') {
+				return enums.getProperties();
+			}
+		},
+		
+		title : function () {
+			return this.getValueOfProperty('title');
+		},
+		
+		description : function () {
+			return this.getValueOfProperty('description');
+		},
+		
+		format : function () {
+			return this.getValueOfProperty('format');
+		},
+		
+		contentEncoding : function () {
+			return this.getValueOfProperty('contentEncoding');
+		},
+		
+		defaultValue : function () {
+			return this.getValueOfProperty('default');
+		},
+		
+		divisibleBy : function () {
+			var divisor = this.getValueOfProperty('divisibleBy');
+			return typeof divisor === 'number' ? divisor : 1;
+		},
+		
+		disallows : function () {
+			return toArray(this.getValueOfProperty('disallow'));
+		},
+		
+		getExtendedSchemas : function () {
+			var extendsProperty = this.getProperty('extends'),
+				extendedSchemas, thisValue, extended, key;
+			if (this.getPrimitiveType() === 'object') {
+				if (!extendsProperty) {
+					return [ this ];
+				} else if (extendsProperty.getPrimitiveType() === 'object') {
+					extendedSchemas = extendsProperty.getExtendedSchemas();
+					thisValue = this.getValue();
+					
+					extended = mapObject(extendedSchemas[0].getValue(), function (value, key) {
+						if (typeOf(value) === 'object' && typeOf(this[key]) === 'object') {
+							return mapObject(value, arguments.callee, this[key]);
+						} else {
+							return value;
+						}
+					}, thisValue);
+					
+					for (key in thisValue) {
+						if (thisValue[key] !== O[key] && key !== 'extends') {
+							extended[key] = thisValue[key];
+						}
+					}
+					
+					extended = getInstance(extended, '(' + this.getURI() + ')/(' + extendedSchemas[0].getURI() + ')', this.getRegistry());
+					
+					extendedSchemas.unshift(extended);
+					return extendedSchemas;
+				} else if (extendsProperty.getPrimitiveType() === 'array') {
+					extended = createObject(this.getValue());
+					extended['extends'] = undefined;
+					extended = getInstance(extended, '(' + this.getURI() + ')/(-extends)', this.getRegistry());
+					return extendsProperty.getProperties().shift(extended);
+				}
+			}
 		},
 		
 		isExtensionOf : function (schema, stack) {
@@ -681,7 +853,8 @@
 				path : [],
 				validated : {},
 				errors : [],
-				instance : ji
+				instance : ji,
+				schema : this
 			};
 			
 			if (!report.validated[uri] || report.validated[uri].indexOf(schemaUri) === -1) {

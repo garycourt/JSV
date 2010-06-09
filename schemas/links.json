@@ -1,0 +1,17 @@
+{
+	"$schema" : "http://json-schema.org/hyper-schema#",
+	"id" : "http://json-schema.org/links#",
+	"type" : "object",
+	
+	"properties" : {
+		"href" : {
+			"type" : "string"
+		},
+		
+		"rel" : {
+			"type" : "string"
+		},
+		
+		
+	}
+}

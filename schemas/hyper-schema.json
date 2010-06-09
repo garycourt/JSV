@@ -1,0 +1,16 @@
+{
+	"$schema" : "http://json-schema.org/hyper-schema#",
+	"id" : "http://json-schema.org/hyper-schema#",
+
+	"properties" : {
+		"links" : {
+			"type" : "array",
+			"items" : {"$ref" : "http://json-schema.org/links#"},
+			"optional" : true
+		}
+	},
+	
+	"links" : {"$ref" : "http://json-schema.org/json-ref#.links"},
+	"fragmentResolution" : {"$ref" : "http://json-schema.org/json-ref#.fragmentResolution"},
+	"extends" : {"$ref" : "http://json-schema.org/schema#"}
+}
