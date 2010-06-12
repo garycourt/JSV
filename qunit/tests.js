@@ -34,6 +34,7 @@ test("Primitive Validation", function () {
 });
 	
 test("Type Validation", function () {
+	//simple type
 	equal(JSONValidator.validate({}, { type : 'object' }).errors.length, 0, "Object");
 	equal(JSONValidator.validate([], { type : 'array' }).errors.length, 0, "Array");
 	equal(JSONValidator.validate('', { type : 'string' }).errors.length, 0, "String");
@@ -50,6 +51,15 @@ test("Type Validation", function () {
 	notEqual(JSONValidator.validate(0.1, { type : 'integer' }).errors.length, 0, "Integer");
 	notEqual(JSONValidator.validate(null, { type : 'boolean' }).errors.length, 0, "Boolean");
 	notEqual(JSONValidator.validate(false, { type : 'null' }).errors.length, 0, "Null");
+	
+	//union type
+	equal(JSONValidator.validate({}, { type : ['null', 'boolean', 'number', 'integer', 'string', 'array', 'object'] }).errors.length, 0, "Object");
+	notEqual(JSONValidator.validate({}, { type : ['null', 'boolean', 'number', 'integer', 'string', 'array'] }).errors.length, 0, "Object");
+	
+	//schema union type
+	equal(JSONValidator.validate({}, { type : [{ type : 'string' }, { type : 'object' }] }).errors.length, 0, "Object");
+	equal(JSONValidator.validate(55, { type : [{ type : 'string' }, { type : 'object' }, 'number'] }).errors.length, 0, "Object");
+	notEqual(JSONValidator.validate([], { type : ['string', { type : 'object' }] }).errors.length, 0, "Array");
 });
 
 test("Properties Validation", function () {
@@ -77,7 +87,7 @@ test("Optional Validation", function () {
 	notEqual(JSONValidator.validate({ b : true }, { properties : { a : { optional : false } } }).errors.length, 0);
 	
 	//according to spec, this should fail; but the validator passes this
-	equals(JSONValidator.validate({ b : true }, { properties : { a : {} } }).errors.length, 0);
+	notEqual(JSONValidator.validate({ b : true }, { properties : { a : {} } }).errors.length, 0);
 });
 
 test("AdditionalProperties Validation", function () {
@@ -237,7 +247,6 @@ test("DivisibleBy Validation", function () {
 });
 
 test("Disallow Validation", function () {
-	['null', 'boolean', 'number', 'integer', 'string', 'array', 'object']
 	equal(JSONValidator.validate({}, { disallow : ['null', 'boolean', 'number', 'integer', 'string', 'array'] }).errors.length, 0, "Object");
 	equal(JSONValidator.validate([], { disallow : ['null', 'boolean', 'number', 'integer', 'string', 'object'] }).errors.length, 0, "Array");
 	equal(JSONValidator.validate('', { disallow : ['null', 'boolean', 'number', 'integer', 'array', 'object'] }).errors.length, 0, "String");
@@ -257,7 +266,12 @@ test("Disallow Validation", function () {
 });
 
 test("Extends Validation", function () {
-	//can of worms
+	equal(JSONValidator.validate({}, { 'extends' : {} }).errors.length, 0);
+	equal(JSONValidator.validate({}, { 'extends' : { type : 'object' } }).errors.length, 0);
+	equal(JSONValidator.validate(1, { type : 'integer', 'extends' : { type : 'number' } }).errors.length, 0);
+	equal(JSONValidator.validate({ a : 1, b : 2 }, { properties : { a : { type : 'number' } }, additionalProperties : false, 'extends' : { properties : { b : { type : 'number' } } } }).errors.length, 0);
+	
+	notEqual(JSONValidator.validate(1, { type : 'number', 'extends' : { type : 'string' } }).errors.length, 0);
 });
 
 test("JSON Schema Validation", function () {

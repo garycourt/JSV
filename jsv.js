@@ -52,6 +52,20 @@
 		return newObj;
 	}
 	
+	if (Array.prototype.map) {
+		function mapArray(arr, func, scope) {
+			return Array.prototype.map.call(arr, func, scope);
+		}
+	} else {
+		function mapArray(arr, func, scope) {
+			var x = 0, xl = arr.length, newArr = Array(xl);
+			for (; x < xl; ++x) {
+				newArr[x] = func.call(scope, arr[x], x, arr);
+			}
+			return newArr;
+		}
+	}
+	
 	function toArray(o) {
 		return o !== undefined && o !== null ? (o instanceof Array && !o.callee ? o : (typeof o.length !== 'number' || o.split || o.setInterval || o.call ? [ o ] : Array.prototype.slice.call(o))) : [];
 	}
@@ -202,12 +216,18 @@
 				//ensure that type matches for at least one of the required types
 				for (x = 0, xl = requiredTypes.length; x < xl; ++x) {
 					key = requiredTypes[x];
-					if (TypeValidators[key] !== O[key] && typeof TypeValidators[key] === 'function') {
-						if (TypeValidators[key](ji, report)) {
-							return true;  //type is valid
+					if (key instanceof JSONInstance) {
+						if (key.validate(ji).errors.length === 0) {
+							return true;  //instance matches this schema
 						}
 					} else {
-						return true;  //unknown types are assumed valid
+						if (TypeValidators[key] !== O[key] && typeof TypeValidators[key] === 'function') {
+							if (TypeValidators[key](ji, report)) {
+								return true;  //type is valid
+							}
+						} else {
+							return true;  //unknown types are assumed valid
+						}
 					}
 				}
 				
@@ -685,7 +705,22 @@
 		},
 		
 		types : function () {
-			return toArray(this.getValueOfProperty('type'));
+			var type = this.getProperty('type'),
+				primitiveType = type.getPrimitiveType();
+			if (primitiveType === 'string') {
+				return [ type.getValue() ]
+			} else if (primitiveType === 'array') {
+				type = type.getProperties();
+				return mapArray(type, function (instance) {
+					if (instance.getPrimitiveType() !== 'object') {
+						return instance.getValue();
+					} else {
+						return instance;
+					}
+				});
+			} else if (primitiveType === 'object') {
+				return [ type ];
+			}
 		},
 		
 		properties : function () {
