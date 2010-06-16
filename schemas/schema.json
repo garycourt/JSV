@@ -6,7 +6,9 @@
 	"properties" : {
 		"type" : {
 			"type" : ["string", "array"],
-			"items" : {"type" : "string"},
+			"items" : {
+				"type" : ["string", {"$ref" : "#"}]
+			},
 			"optional" : true,
 			"uniqueItems" : true,
 			"default" : "any"
@@ -20,11 +22,10 @@
 		},
 		
 		"items" : {
-			"type" : ["object", "array"],
-			"properties" : {"$ref" : "#.properties"},
+			"type" : [{"$ref" : "#"}, "array"],
 			"items" : {"$ref" : "#"},
 			"optional" : true,
-			"default" : {"$ref" : "http://json-schema.org/empty-schema#"}
+			"default" : {}
 		},
 		
 		"optional" : {
@@ -34,15 +35,13 @@
 		},
 		
 		"additionalProperties" : {
-			"type" : ["object", "boolean"],
-			"properties" : {"$ref" : "#.properties"},
+			"type" : [{"$ref" : "#"}, "boolean"],
 			"optional" : true,
-			"default" : {"$ref" : "http://json-schema.org/empty-schema#"}
+			"default" : {}
 		},
 		
 		"requires" : {
-			"type" : ["string", "object"],
-			"properties" : {"$ref" : "#.properties"},
+			"type" : ["string", {"$ref" : "#"}],
 			"optional" : true
 		},
 		
@@ -154,14 +153,13 @@
 		},
 		
 		"extends" : {
-			"type" : ["object", "array"],
-			"properties" : {"$ref" : "#.properties"},
+			"type" : [{"$ref" : "#"}, "array"],
 			"items" : {"$ref" : "#"},
 			"optional" : true,
-			"default" : {"$ref" : "http://json-schema.org/empty-schema#"}
+			"default" : {}
 		},
 	},
 	
 	"optional" : true,
-	"default" : {"$ref" : "http://json-schema.org/empty-schema#"}
+	"default" : {}
 }

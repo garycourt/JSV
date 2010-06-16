@@ -1,4 +1,3 @@
--schemas are wrapped JSON instances
 -extends can convert schemas before hand
 -schemas can have subschemas which must be validated too
 -if a schema has a definedby link, link the schema schema to the schema

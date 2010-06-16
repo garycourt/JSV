@@ -209,7 +209,7 @@
 		
 		'type' : function (ji, requiredSchema, report) {
 			var requiredTypes = requiredSchema.types(),
-				x, xl, key;
+				x, xl, key, subreport;
 			
 			//for instances that are required to be a certain type
 			if (requiredTypes && requiredTypes.length) {
@@ -217,7 +217,9 @@
 				for (x = 0, xl = requiredTypes.length; x < xl; ++x) {
 					key = requiredTypes[x];
 					if (key instanceof JSONInstance) {
-						if (key.validate(ji).errors.length === 0) {
+						subreport = createObject(report);
+						subreport.errors = [];
+						if (key.validate(ji, subreport).errors.length === 0) {
 							return true;  //instance matches this schema
 						}
 					} else {
@@ -947,9 +949,12 @@
 	buildSchema('#.properties', {}, null);  //#.properties.properties
 	buildSchema('#.properties.type', {}, '#');
 	buildSchema('#.properties.type.items', {}, '#');
-	buildSchema('#.properties.type.items.type', "string", '#.properties.type');
-	buildSchemaRef('#.properties.type.additionalProperties', '#.properties.type.items');  //needed only by this validator for next rule
-	buildSchema('#.properties.type.type', ["string", "array"], '#.properties.type');
+	buildSchema('#.properties.type.items.type', [], '#.properties.type');
+	buildSchema('#.properties.type.items.type.0', "string", '#.properties.type.items');
+	buildSchemaRef('#.properties.type.items.type.1', '#');
+	buildSchema('#.properties.type.type', [], '#.properties.type');
+	buildSchema('#.properties.type.type.0', "string", '#.properties.type.items');
+	buildSchema('#.properties.type.type.1', "array", '#.properties.type.items');
 	buildSchema('#.properties.type.optional', true, null);  //#.properties.optional
 	buildSchema('#.properties.type.default', "any", null);  //#.properties.default
 	buildSchema('#.properties.properties', {}, '#');
@@ -958,8 +963,9 @@
 	buildSchema('#.properties.properties.optional', true, null);  //#.properties.optional
 	buildSchema('#.properties.properties.default', {}, null);  //#.properties.default
 	buildSchema('#.properties.items', {}, '#');
-	buildSchema('#.properties.items.type', ["object", "array"], '#.properties.type');
-	buildSchemaRef('#.properties.items.properties', '#.properties');
+	buildSchema('#.properties.items.type', [], '#.properties.type');
+	buildSchemaRef('#.properties.items.type.0', '#');
+	buildSchema('#.properties.items.type.1', "array", '#.properties.type.items');
 	buildSchemaRef('#.properties.items.items', '#');
 	buildSchema('#.properties.items.optional', true, null);  //#.properties.optional
 	buildSchema('#.properties.items.default', {}, null);  //#.properties.default
@@ -968,8 +974,9 @@
 	buildSchema('#.properties.optional.optional', true, '#.properties.optional');
 	buildSchema('#.properties.optional.default', false, null);  //#.properties.default
 	buildSchema('#.properties.additionalProperties', {}, '#');
-	buildSchema('#.properties.additionalProperties.type', ["object", "boolean"], '#.properties.type');
-	buildSchemaRef('#.properties.additionalProperties.properties', '#.properties');
+	buildSchema('#.properties.additionalProperties.type', [], '#.properties.type');
+	buildSchemaRef('#.properties.additionalProperties.type.0', '#');
+	buildSchema('#.properties.additionalProperties.type.1', "boolean", '#.properties.type');
 	buildSchema('#.properties.additionalProperties.optional', true, '#.properties.optional');
 	buildSchema('#.properties.additionalProperties.default', {}, null);  //#.properties.default
 	buildSchema('#.properties.default', {}, '#');
@@ -992,11 +999,14 @@
 		EMPTY_SCHEMA : EMPTY_SCHEMA,
 		
 		validate : function (json, schema) {
-			var registry = new JSONRegistry(this.globalRegistry);
-			schema = schema instanceof JSONInstance ? schema : (schema ? getInstance(schema, null, registry) : EMPTY_SCHEMA);
-			json = json instanceof JSONInstance ? json : getInstance(json, null, registry); 
+			var registry = new JSONRegistry(this.globalRegistry),
+				report;
 			
-			return schema.validate(json);
+			schema = schema instanceof JSONInstance ? schema : (schema ? getInstance(schema, null, registry) : EMPTY_SCHEMA);
+			report = JSONSCHEMA_SCHEMA.validate(schema);
+			
+			json = json instanceof JSONInstance ? json : getInstance(json, null, registry);
+			return schema.validate(json, report);
 		}
 		
 	};
