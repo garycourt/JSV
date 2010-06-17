@@ -272,6 +272,8 @@ test("Extends Validation", function () {
 	equal(JSONValidator.validate({ a : 1, b : 2 }, { properties : { a : { type : 'number' } }, additionalProperties : false, 'extends' : { properties : { b : { type : 'number' } } } }).errors.length, 0);
 	
 	notEqual(JSONValidator.validate(1, { type : 'number', 'extends' : { type : 'string' } }).errors.length, 0);
+	
+	//TODO: More tests
 });
 
 test("JSON Schema Validation", function () {

@@ -11,8 +11,10 @@
 		
 		TypeValidators,
 		FormatValidators,
-		PropertyAttributeValidators,
 		AttributeValidators,
+		SchemaTransformers,
+		PropertyAttributeValidators,
+		JSONRegistry,
 		JSONInstance,
 		JSONValidator,
 		exports = this;
@@ -139,19 +141,14 @@
 		var attributes, attributeName;
 		report.path.push(property);
 		
-		if (cji) {
-			//ensure the child is valid against the schema
-			childSchema.validate(cji, report);
+		if (!cji) {
+			//create undefined instance
+			cji = getInstance(undefined, pji.getURI() + '.' + property, pji.getRegistry());
 		}
 		
-		//for each schema attribute of the child instance
-		attributes = childSchema.getProperties();
-		for (attributeName in attributes) {
-			if (attributes[attributeName] !== O[attributeName] && PropertyAttributeValidators[attributeName] !== O[attributeName]) {
-				PropertyAttributeValidators[attributeName](pji, parentSchema, property, cji, childSchema, report);
-			}
-		}
-		
+		//ensure the child is valid against the schema
+		childSchema.validate(cji, report, pji);
+
 		report.path.pop();
 	}
 	
@@ -212,7 +209,7 @@
 				x, xl, key, subreport;
 			
 			//for instances that are required to be a certain type
-			if (requiredTypes && requiredTypes.length) {
+			if (ji.getPrimitiveType() !== 'undefined' && requiredTypes && requiredTypes.length) {
 				//ensure that type matches for at least one of the required types
 				for (x = 0, xl = requiredTypes.length; x < xl; ++x) {
 					key = requiredTypes[x];
@@ -427,7 +424,7 @@
 				x, xl, key;
 			
 			//for instances that are required to be a certain type
-			if (disallowedTypes && disallowedTypes.length) {
+			if (ji.getPrimitiveType() !== 'undefined' && disallowedTypes && disallowedTypes.length) {
 				//ensure that type matches for at least one of the required types
 				for (x = 0, xl = disallowedTypes.length; x < xl; ++x) {
 					key = disallowedTypes[x];
@@ -453,9 +450,14 @@
 		},
 		
 		'extends' : function (ji, requiredSchema, report) {
-			var extensions = requiredSchema.getExtendedSchemas();
-			for (x = 0, xl = extensions.length; x < xl && !report.errors.length; ++x) {
-				extensions[x].validate(ji, report);
+			var extensions = requiredSchema.getProperty('extends'), x, xl;
+			if (extensions.getPrimitiveType() === 'object') {
+				extensions.validate(ji, report);
+			} else if (extensions.getPrimitiveType() === 'array') {
+				extensions = extensions.getProperties();
+				for (x = 0, xl = extensions.length; x < xl; ++x) {
+					extensions[x].validate(ji, report);
+				}
 			}
 		}
 		
@@ -467,13 +469,13 @@
 	
 	PropertyAttributeValidators = {
 		
-		'optional' : function (pji, parentSchema, property, cji, childSchema, report) {
-			if (!childSchema.optional() && !cji) {
+		'optional' : function (cji, childSchema, pji, report) {
+			if (cji.getPrimitiveType() === 'undefined' && !childSchema.optional()) {
 				error(report, cji, childSchema, 'optional', "Property is required", false);
 			}
 		},
 		
-		'requires' : function (pji, parentSchema, property, cji, childSchema, report) {
+		'requires' : function (cji, childSchema, pji, report) {
 			var requires = childSchema.requires();
 			if (typeof requires === 'string') {
 				if (!pji.getProperty(requires)) {
@@ -485,6 +487,27 @@
 		}
 		
 	};
+	
+	/*
+	 * SchemaTransformers
+	 */
+	
+	SchemaTransformers = [
+		
+		/* extends */
+		function (schema, report) {
+			var extendsProperty = schema.getProperty('extends');
+			if (extendsProperty && extendsProperty.getPrimitiveType() === 'object') {
+				return schema.getExtendedSchema();
+			}
+		},
+		
+		/* $schema.links */
+		function (schema, report) {
+			//TODO
+		}
+		
+	];
 	
 	/*
 	 * JSONRegistry
@@ -563,7 +586,8 @@
 			break;
 			
 		default:
-			this._type = this._value = undefined;
+			this._type = 'undefined';
+			this._value = undefined;
 		}
 	};
 	
@@ -753,7 +777,7 @@
 		},
 		
 		optional : function () {
-			return this.getValueOfProperty('optional');
+			return !!this.getValueOfProperty('optional');
 		},
 		
 		requires : function () {
@@ -826,64 +850,40 @@
 			return toArray(this.getValueOfProperty('disallow'));
 		},
 		
-		getExtendedSchemas : function () {
+		getExtendedSchema : function () {
 			var extendsProperty = this.getProperty('extends'),
-				extendedSchemas, thisValue, extended, key;
-			if (this.getPrimitiveType() === 'object') {
-				if (!extendsProperty) {
-					return [ this ];
-				} else if (extendsProperty.getPrimitiveType() === 'object') {
-					extendedSchemas = extendsProperty.getExtendedSchemas();
-					thisValue = this.getValue();
-					
-					extended = mapObject(extendedSchemas[0].getValue(), function (value, key) {
-						if (typeOf(value) === 'object' && typeOf(this[key]) === 'object') {
-							return mapObject(value, arguments.callee, this[key]);
-						} else {
-							return value;
-						}
-					}, thisValue);
-					
-					for (key in thisValue) {
-						if (thisValue[key] !== O[key] && key !== 'extends') {
-							extended[key] = thisValue[key];
-						}
-					}
-					
-					extended = getInstance(extended, '(' + this.getURI() + ')/(' + extendedSchemas[0].getURI() + ')', this.getRegistry());
-					
-					extendedSchemas.unshift(extended);
-					return extendedSchemas;
-				} else if (extendsProperty.getPrimitiveType() === 'array') {
-					extended = createObject(this.getValue());
-					extended['extends'] = undefined;
-					extended = getInstance(extended, '(' + this.getURI() + ')/(-extends)', this.getRegistry());
-					return extendsProperty.getProperties().shift(extended);
-				}
-			}
-		},
-		
-		isExtensionOf : function (schema, stack) {
-			var extensions, x, xl;
-			if (schema) {
-				if (this.getURI() === schema.getURI()) {
-					return true;
-				} else {
-					stack = stack || [ this ];
-					extensions = this.extensions();
-					for (x = 0, xl = extensions.length; x < xl; ++x) {
-						if (stack.indexOf(extensions[x]) === -1 && extensions[x].isExtensionOf(schema, stack)) {
-							return true;
+				extendedSchema;
+			if (this.getPrimitiveType() === 'object' && extendsProperty && extendsProperty.getPrimitiveType() === 'object') {
+				extendedSchema = extendsProperty.getExtendedSchema();
+				extended = extendedSchema.getValue();
+				thisValue = this.getValue();
+				
+				function merge(base, extra, schema) {
+					var key;
+					for (key in extra) {
+						if (extra[key] !== O[key]) {
+							if (schema && key === 'extends') {
+								base[key] = toArray(base[key]).concat(toArray(extra[key]));
+							} else if (typeOf(base[key]) === 'object' && typeOf(extra[key]) === 'object') {
+								merge(base[key], extra[key], !schema || key !== 'properties');  //FIXME: An attribute other then "properties" may be a plain object
+							} else {
+								base[key] = extra[key];
+							}
 						}
 					}
 				}
+				
+				merge(extended, thisValue, true);
+				return getInstance(extended, '(' + extendedSchema.getURI() + ')+(' + this.getURI() + ')#', this.getRegistry());
 			}
-			return false;
+			
+			return this;
 		},
 		
-		validate : function (ji, report) {
-			var schemaUri, uri, properties, key;
-			schemaUri = this.getURI();
+		validate : function (ji, report, pji) {
+			var schema, schemaUri, uri, x, xl, properties, key;
+			schema = this,
+			schemaUri = schema.getURI();
 			ji = ji instanceof JSONInstance ? ji : getInstance(ji);
 			uri = ji.getURI();
 			report = report || {
@@ -891,7 +891,7 @@
 				validated : {},
 				errors : [],
 				instance : ji,
-				schema : this
+				schema : schema
 			};
 			
 			if (!report.validated[uri] || report.validated[uri].indexOf(schemaUri) === -1) {
@@ -901,11 +901,24 @@
 					report.validated[uri].push(schemaUri);
 				}
 				
-				properties = this.getProperties();
-				for (key in properties) {
-					if (properties[key] !== O[key] && AttributeValidators[key] !== O[key]) {
-						AttributeValidators[key](ji, this, report);
+				for (x = 0, xl = SchemaTransformers.length; x < xl; ++x) {
+					schema = SchemaTransformers[x](schema, report) || schema;
+				}
+				
+				if (schema === this) {
+					properties = this.getProperties();
+					for (key in properties) {
+						if (properties[key] !== O[key]) {
+							if (AttributeValidators[key] !== O[key]) {
+								AttributeValidators[key](ji, schema, report);
+							}
+							if (pji && PropertyAttributeValidators[key] !== O[key]) {
+								PropertyAttributeValidators[key](ji, schema, pji, report);
+							}
+						}
 					}
+				} else {
+					schema.validate(ji, report);
 				}
 			}
 			
