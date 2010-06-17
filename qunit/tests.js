@@ -85,8 +85,6 @@ test("Optional Validation", function () {
 	
 	notEqual(JSONValidator.validate({}, { properties : { a : { optional : false } } }).errors.length, 0);
 	notEqual(JSONValidator.validate({ b : true }, { properties : { a : { optional : false } } }).errors.length, 0);
-	
-	//according to spec, this should fail; but the validator passes this
 	notEqual(JSONValidator.validate({ b : true }, { properties : { a : {} } }).errors.length, 0);
 });
 

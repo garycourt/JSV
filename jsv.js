@@ -12,8 +12,9 @@
 		TypeValidators,
 		FormatValidators,
 		AttributeValidators,
-		SchemaTransformers,
+		RequiredAttributeValidators,
 		PropertyAttributeValidators,
+		SchemaTransformers,
 		JSONRegistry,
 		JSONInstance,
 		JSONValidator,
@@ -464,6 +465,14 @@
 	};
 	
 	/*
+	 * RequiredAttributeValidators
+	 */
+	
+	RequiredAttributeValidators = [
+		'optional'
+	];
+	
+	/*
 	 * PropertyAttributeValidators
 	 */
 	
@@ -907,6 +916,11 @@
 				
 				if (schema === this) {
 					properties = this.getProperties();
+					
+					for (x = 0, xl = RequiredAttributeValidators.length; x < xl; ++x) {
+						properties[RequiredAttributeValidators[x]] = true;
+					}
+					
 					for (key in properties) {
 						if (properties[key] !== O[key]) {
 							if (AttributeValidators[key] !== O[key]) {
