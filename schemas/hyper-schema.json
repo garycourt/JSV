@@ -54,7 +54,7 @@
 		
 		{
 			"href" : "{$schema}",
-			"rel" : "definedby"
+			"rel" : "describedby"
 		},
 		
 		{

@@ -279,7 +279,9 @@ test("JSON Schema Validation", function () {
 });
 
 test("Links Validation", function () {
-	
+	//full
+	//describedby
+	//self
 });
 
 //test("", function () {});

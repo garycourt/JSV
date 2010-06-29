@@ -510,13 +510,18 @@ var exports = exports || this,
 	
 	SchemaTransformers = [
 		
-		/* @.$schema.links[?(@.rel="full")] */
-		function (schema, report) {
+		/* ji.$schema */
+		function (ji, schema, report) {
+			return schema.getInstanceByLinkRel(ji, 'describedby');
+		},
+		
+		/* schema.$ref */
+		function (ji, schema, report) {
 			return HYPERSCHEMA_SCHEMA.getFull(schema);
 		},
 		
-		/* @.extends */
-		function (schema, report) {
+		/* schema.extends */
+		function (ji, schema, report) {
 			var extendsProperty = schema.getProperty('extends');
 			if (extendsProperty && extendsProperty.getPrimitiveType() === 'object') {
 				return schema.getExtendedSchema();
@@ -892,10 +897,21 @@ var exports = exports || this,
 		
 		getExtendedSchema : function () {
 			var extendsProperty = this.getProperty('extends'),
-				extendedSchema, 
+				extendedSchema,
+				extendedUri, 
+				extended,
+				thisValue,
 				instance;
+			
 			if (this.getPrimitiveType() === 'object' && extendsProperty && extendsProperty.getPrimitiveType() === 'object') {
 				extendedSchema = HYPERSCHEMA_SCHEMA.getFull(extendsProperty).getExtendedSchema();
+				extendedUri = this.getURI() + '(' + escapeURIComponent(extendedSchema.getURI()) + ')';
+				
+				instance = this.getRegistry().getInstanceByURI(extendedUri);
+				if (instance) {
+					return instance;
+				}
+				
 				extended = extendedSchema.getValue();
 				thisValue = this.getValue();
 				
@@ -915,7 +931,7 @@ var exports = exports || this,
 				}
 				
 				merge(extended, thisValue, true);
-				instance = getInstance(extended, this.getURI() + '(' + escapeURIComponent(extendedSchema.getURI()) + ')', this.getRegistry());
+				instance = getInstance(extended, extendedUri, this.getRegistry());
 				return instance;
 			}
 			
@@ -939,7 +955,7 @@ var exports = exports || this,
 		},
 		
 		getInstanceByLinkRel : function (instance, rel) {
-			var link = this.linkByRel('full'), 
+			var link = this.linkByRel(rel), 
 				href, 
 				uri;
 			
@@ -959,17 +975,17 @@ var exports = exports || this,
 		getFull : function (instance) {
 			return this.getInstanceByLinkRel(instance, 'full') || instance;
 		},
-		
+		/*
 		getSchema : function () {
-			return HYPERSCHEMA_SCHEMA.getInstanceByLinkRel(this, 'definedby') || this.getRegistry().getSchemaOfURI(this.getURI());
+			return HYPERSCHEMA_SCHEMA.getInstanceByLinkRel(this, 'describedby') || this.getRegistry().getSchemaOfURI(this.getURI());
 		},
-		
+		*/
 		validate : function (ji, report, pji) {
 			var schema, scemaUri, uri, registry, x, xl, properties, key;
 			schema = this;
 			
 			for (x = 0, xl = SchemaTransformers.length; x < xl; ++x) {
-				schema = SchemaTransformers[x](schema, report) || schema;
+				schema = SchemaTransformers[x](ji, schema, report) || schema;
 			}
 				
 			schemaUri = schema.getURI();
@@ -1017,72 +1033,6 @@ var exports = exports || this,
 	 */
 	
 	GLOBAL_REGISTRY = new JSONRegistry();
-	/*
-	JSONSCHEMA_SCHEMA = new JSONInstance({}, 'http://json-schema.org/schema', GLOBAL_REGISTRY);
-	
-	function buildSchema(uri, json, schemaUri) {
-		var instance, uriSplit, prop, parentUri;
-		uri = 'http://json-schema.org/schema' + uri;
-		schemaUri = schemaUri && 'http://json-schema.org/schema' + schemaUri;
-		instance = json instanceof JSONInstance ? json : new JSONInstance(json, uri, GLOBAL_REGISTRY);
-		uriSplit = uri.split('.');
-		prop = uriSplit.pop();
-		parentUri = uriSplit.join('.');
-		GLOBAL_REGISTRY.getInstanceByURI(parentUri).setProperty(prop, instance);
-	}
-	
-	function buildSchemaRef(uri, schemaUri) {
-		var schema, uriSplit, prop, parentUri;
-		uri = 'http://json-schema.org/schema' + uri;
-		schemaUri = 'http://json-schema.org/schema' + schemaUri;
-		schema = GLOBAL_REGISTRY.getInstanceByURI(schemaUri);
-		uriSplit = uri.split('.');
-		prop = uriSplit.pop();
-		parentUri = uriSplit.join('.');
-		GLOBAL_REGISTRY.getInstanceByURI(parentUri).setProperty(prop, schema);
-	}
-	
-	//bootstrap JSON Schema schema
-	buildSchema('#.type', "object", null);  //#.properties.type
-	buildSchema('#.properties', {}, null);  //#.properties.properties
-	buildSchema('#.properties.type', {}, '#');
-	buildSchema('#.properties.type.items', {}, '#');
-	buildSchema('#.properties.type.items.type', [], '#.properties.type');
-	buildSchema('#.properties.type.items.type.0', "string", '#.properties.type.items');
-	buildSchemaRef('#.properties.type.items.type.1', '#');
-	buildSchema('#.properties.type.type', [], '#.properties.type');
-	buildSchema('#.properties.type.type.0', "string", '#.properties.type.items');
-	buildSchema('#.properties.type.type.1', "array", '#.properties.type.items');
-	buildSchema('#.properties.type.optional', true, null);  //#.properties.optional
-	buildSchema('#.properties.type.default', "any", null);  //#.properties.default
-	buildSchema('#.properties.properties', {}, '#');
-	buildSchema('#.properties.properties.type', "object", '#.properties.type');
-	buildSchemaRef('#.properties.properties.additionalProperties', '#');
-	buildSchema('#.properties.properties.optional', true, null);  //#.properties.optional
-	buildSchema('#.properties.properties.default', {}, null);  //#.properties.default
-	buildSchema('#.properties.items', {}, '#');
-	buildSchema('#.properties.items.type', [], '#.properties.type');
-	buildSchemaRef('#.properties.items.type.0', '#');
-	buildSchema('#.properties.items.type.1', "array", '#.properties.type.items');
-	buildSchemaRef('#.properties.items.items', '#');
-	buildSchema('#.properties.items.optional', true, null);  //#.properties.optional
-	buildSchema('#.properties.items.default', {}, null);  //#.properties.default
-	buildSchema('#.properties.optional', {}, '#');
-	buildSchema('#.properties.optional.type', "boolean", '#.properties.type');
-	buildSchema('#.properties.optional.optional', true, '#.properties.optional');
-	buildSchema('#.properties.optional.default', false, null);  //#.properties.default
-	buildSchema('#.properties.additionalProperties', {}, '#');
-	buildSchema('#.properties.additionalProperties.type', [], '#.properties.type');
-	buildSchemaRef('#.properties.additionalProperties.type.0', '#');
-	buildSchema('#.properties.additionalProperties.type.1', "boolean", '#.properties.type');
-	buildSchema('#.properties.additionalProperties.optional', true, '#.properties.optional');
-	buildSchema('#.properties.additionalProperties.default', {}, null);  //#.properties.default
-	buildSchema('#.properties.default', {}, '#');
-	buildSchema('#.properties.default.type', "any", '#.properties.type');
-	buildSchema('#.properties.default.optional', true, '#.properties.optional');
-	buildSchema('#.optional', true, '#.properties.optional');
-	buildSchema('#.default', {}, '#.properties.default');
-	*/
 	
 	JSONSCHEMA_SCHEMA = new JSONInstance({
 		"$schema" : "http://json-schema.org/hyper-schema#",
@@ -1306,7 +1256,7 @@ var exports = exports || this,
 			
 			{
 				"href" : "{$schema}",
-				"rel" : "definedby"
+				"rel" : "describedby"
 			},
 			
 			{
@@ -1386,9 +1336,15 @@ var exports = exports || this,
 	
 	exports.JSONValidator = JSONValidator;
 	
-	JSONValidator.validate(JSONValidator.HYPERSCHEMA_SCHEMA, JSONValidator.HYPERSCHEMA_SCHEMA);
-	JSONValidator.validate(JSONValidator.JSONSCHEMA_SCHEMA, JSONValidator.HYPERSCHEMA_SCHEMA);
-	JSONValidator.validate(JSONValidator.LINKS_SCHEMA, JSONValidator.HYPERSCHEMA_SCHEMA);
-	JSONValidator.validate(JSONValidator.EMPTY_SCHEMA, JSONValidator.HYPERSCHEMA_SCHEMA);
+	function assertNoErrors(report, uri) {
+		if (report.errors.length) {
+			throw new Error('Schema ' + uri + ' did not validate');
+		}
+	}
+	
+	assertNoErrors(JSONValidator.validate(JSONValidator.HYPERSCHEMA_SCHEMA, JSONValidator.HYPERSCHEMA_SCHEMA), JSONValidator.HYPERSCHEMA_SCHEMA.getURI());
+	assertNoErrors(JSONValidator.validate(JSONValidator.JSONSCHEMA_SCHEMA, JSONValidator.HYPERSCHEMA_SCHEMA), JSONValidator.JSONSCHEMA_SCHEMA.getURI());
+	assertNoErrors(JSONValidator.validate(JSONValidator.LINKS_SCHEMA, JSONValidator.HYPERSCHEMA_SCHEMA), JSONValidator.LINKS_SCHEMA.getURI());
+	assertNoErrors(JSONValidator.validate(JSONValidator.EMPTY_SCHEMA, JSONValidator.HYPERSCHEMA_SCHEMA), JSONValidator.EMPTY_SCHEMA.getURI());
 	
 }());
