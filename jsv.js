@@ -139,7 +139,6 @@ var exports = exports || this,
 	
 	function error(report, instance, schema, attr, message, details) {
 		report.errors.push({
-			path : report.path.join('.'),
 			uri : instance && instance.getURI(),
 			schemaUri : schema && schema.getURI(),
 			attribute : attr,
@@ -149,9 +148,6 @@ var exports = exports || this,
 	}
 	
 	function validateChild(pji, parentSchema, property, cji, childSchema, report) {
-		var attributes, attributeName;
-		report.path.push(property);
-		
 		if (!cji) {
 			//create undefined instance
 			cji = getInstance(undefined, pji.getURI() + '.' + property, pji.getRegistry());
@@ -159,8 +155,6 @@ var exports = exports || this,
 		
 		//ensure the child is valid against the schema
 		childSchema.validate(cji, report, pji);
-
-		report.path.pop();
 	}
 	
 	/*
@@ -983,7 +977,6 @@ var exports = exports || this,
 			uri = ji.getURI();
 			registry = ji.getRegistry();
 			report = report || {
-				path : [],
 				errors : [],
 				instance : ji,
 				schema : schema
@@ -1378,7 +1371,7 @@ var exports = exports || this,
 			var registry = new JSONRegistry(this.globalRegistry),
 				report;
 			
-			schemaSchema = schemaSchema || HYPERSCHEMA_SCHEMA;
+			schemaSchema = HYPERSCHEMA_SCHEMA;  //TODO: Make validator more generic
 			
 			schema = schema instanceof JSONInstance ? schema : (schema ? getInstance(schema, null, registry) : EMPTY_SCHEMA);
 			report = schemaSchema.validate(schema);
