@@ -1,12 +1,19 @@
 "use strict";
 
+var exports = exports || this,
+	require = require || function () {
+		return exports;
+	};
+
 (function () {
 	
-	var O = {},
+	var URL = require('./url.js').URL,
+		
+		O = {},
 		GLOBAL_REGISTRY,
-		JSONSCHEMA_SCHEMA_JSON,
 		JSONSCHEMA_SCHEMA,
-		EMPTY_SCHEMA_JSON,
+		HYPERSCHEMA_SCHEMA,
+		LINKS_SCHEMA,
 		EMPTY_SCHEMA,
 		
 		TypeValidators,
@@ -17,8 +24,7 @@
 		SchemaTransformers,
 		JSONRegistry,
 		JSONInstance,
-		JSONValidator,
-		exports = this;
+		JSONValidator;
 	
 	function typeOf (o) {
 		return o === undefined ? 'undefined' : (o === null ? 'null' : Object.prototype.toString.call(o).split(' ').pop().split(']').shift().toLowerCase());
@@ -112,6 +118,10 @@
 			i2h[Math.floor(Math.random() * 0x10)],
 			i2h[Math.floor(Math.random() * 0x10)]
 		].join('');
+	}
+	
+	function escapeURIComponent(str) {
+		return encodeURIComponent(str).replace(/!/g, '%21').replace(/'/g, '%27').replace(/\(/g, '%28').replace(/\)/g, '%29').replace(/\*/g, '%2A');
 	}
 	
 	function getInstance(json, uri, registry) {
@@ -485,13 +495,16 @@
 		},
 		
 		'requires' : function (cji, childSchema, pji, report) {
-			var requires = childSchema.requires();
-			if (typeof requires === 'string') {
-				if (!pji.getProperty(requires)) {
-					error(report, cji, childSchema, 'requires', 'Property requires sibling property "' + requires + '"', requires);
+			var requires;
+			if (cji.getPrimitiveType() !== 'undefined') {
+				requires = childSchema.requires();
+				if (typeof requires === 'string') {
+					if (!pji.getProperty(requires)) {
+						error(report, cji, childSchema, 'requires', 'Property requires sibling property "' + requires + '"', requires);
+					}
+				} else if (requires instanceof JSONInstance && requires.getPrimitiveType() === 'object') {
+					requires.validate(pji, report);
 				}
-			} else if (requires instanceof JSONInstance && requires.getPrimitiveType() === 'object') {
-				requires.validate(pji, report);
 			}
 		}
 		
@@ -503,17 +516,17 @@
 	
 	SchemaTransformers = [
 		
-		/* extends */
+		/* @.$schema.links[?(@.rel="full")] */
+		function (schema, report) {
+			return HYPERSCHEMA_SCHEMA.getFull(schema);
+		},
+		
+		/* @.extends */
 		function (schema, report) {
 			var extendsProperty = schema.getProperty('extends');
 			if (extendsProperty && extendsProperty.getPrimitiveType() === 'object') {
 				return schema.getExtendedSchema();
 			}
-		},
-		
-		/* $schema.links */
-		function (schema, report) {
-			//TODO
 		}
 		
 	];
@@ -526,16 +539,19 @@
 		this._value2instanceKey = parentRegistry ? cloneArray(parentRegistry._value2instanceKey) : [];
 		this._value2instanceValue = parentRegistry ? cloneArray(parentRegistry._value2instanceValue) : [];
 		this._uri2instance = parentRegistry ? createObject(parentRegistry._uri2instance) : {};
+		this._validated = parentRegistry ? createObject(parentRegistry._validated) : {};
 	};
 	
 	JSONRegistry.prototype = {
 		registerInstance : function (instance, value, uri) {
 			var type = typeOf(value);
-			if (type === 'object' || type === 'array') {
-				this._value2instanceKey.push(value);
-				this._value2instanceValue.push(instance);
+			if (type !== 'undefined') {
+				if (type === 'object' || type === 'array') {
+					this._value2instanceKey.push(value);
+					this._value2instanceValue.push(instance);
+				}
+				this._uri2instance[uri] = instance;
 			}
-			this._uri2instance[uri] = instance;
 		},
 		
 		getInstanceByValue : function (value) {
@@ -551,6 +567,25 @@
 		
 		getInstanceByURI : function (uri) {
 			return this._uri2instance[uri];
+		},
+		
+		registerValidation : function (uri, schemaUri) {
+			if (!this._validated[uri]) {
+				this._validated[uri] = [ schemaUri ];
+			} else {
+				this._validated[uri].push(schemaUri);
+			}
+		},
+		
+		isValidatedBy : function (uri, schemaUri) {
+			return !!this._validated[uri] && this._validated[uri].indexOf(schemaUri) !== -1;
+		},
+		
+		getSchemaOfURI : function (uri) {
+			var schemaUri = this._validated[uri] && this._validated[uri][0];
+			if (schemaUri) {
+				return this._uri2instance[schemaUri];
+			}
 		}
 	};
 	
@@ -707,7 +742,9 @@
 				instance = o instanceof JSONInstance ? o : this._registry.getInstanceByValue(o),
 				instanceType = instance ? instance.getPrimitiveType() : typeOf(o);
 			
-			if (type !== instanceType) {
+			if (this === instance) {
+				return true;
+			} else if (type !== instanceType) {
 				return false;
 			} else if (instance && this.getURI() === instance.getURI()) {
 				return true;
@@ -861,20 +898,21 @@
 		
 		getExtendedSchema : function () {
 			var extendsProperty = this.getProperty('extends'),
-				extendedSchema;
+				extendedSchema, 
+				instance;
 			if (this.getPrimitiveType() === 'object' && extendsProperty && extendsProperty.getPrimitiveType() === 'object') {
-				extendedSchema = extendsProperty.getExtendedSchema();
+				extendedSchema = HYPERSCHEMA_SCHEMA.getFull(extendsProperty).getExtendedSchema();
 				extended = extendedSchema.getValue();
 				thisValue = this.getValue();
 				
-				function merge(base, extra, schema) {
+				function merge(base, extra, isSchema) {
 					var key;
 					for (key in extra) {
 						if (extra[key] !== O[key]) {
-							if (schema && key === 'extends') {
+							if (isSchema && key === 'extends') {
 								base[key] = toArray(base[key]).concat(toArray(extra[key]));
 							} else if (typeOf(base[key]) === 'object' && typeOf(extra[key]) === 'object') {
-								merge(base[key], extra[key], !schema || key !== 'properties');  //FIXME: An attribute other then "properties" may be a plain object
+								merge(base[key], extra[key], !isSchema || key !== 'properties');  //FIXME: An attribute other then "properties" may be a plain object
 							} else {
 								base[key] = extra[key];
 							}
@@ -883,56 +921,96 @@
 				}
 				
 				merge(extended, thisValue, true);
-				return getInstance(extended, '(' + extendedSchema.getURI() + ')+(' + this.getURI() + ')#', this.getRegistry());
+				instance = getInstance(extended, this.getURI() + '(' + escapeURIComponent(extendedSchema.getURI()) + ')', this.getRegistry());
+				return instance;
 			}
 			
 			return this;
 		},
 		
+		links : function () {
+			var links = this.getProperty('links');
+			return links && links.getProperties();
+		},
+		
+		linkByRel : function (rel) {
+			var links = this.links(), x, xl;
+			if (typeOf(links) === 'array') {
+				for (x = 0, xl = links.length; x < xl; ++x) {
+					if (links[x].getValueOfProperty('rel') === rel) {
+						return links[x];
+					}
+				}
+			}
+		},
+		
+		getInstanceByLinkRel : function (instance, rel) {
+			var link = this.linkByRel('full'), 
+				href, 
+				uri;
+			
+			if (link) {
+				href = link.getValueOfProperty('href');
+				href = href.replace(/\{(.+)\}/g, function (str, p1, offset, s) {
+					var value = instance.getValueOfProperty(p1);
+					return value !== undefined ? String(value) : '';
+				});
+				if (href) {
+					uri = URL.resolve(instance.getURI(), href);
+					return instance.getRegistry().getInstanceByURI(uri);
+				}
+			}
+		},
+		
+		getFull : function (instance) {
+			return this.getInstanceByLinkRel(instance, 'full') || instance;
+		},
+		
+		getSchema : function () {
+			return HYPERSCHEMA_SCHEMA.getInstanceByLinkRel(this, 'definedby') || this.getRegistry().getSchemaOfURI(this.getURI());
+		},
+		
 		validate : function (ji, report, pji) {
-			var schema, schemaUri, uri, x, xl, properties, key;
-			schema = this,
+			var schema, scemaUri, uri, registry, x, xl, properties, key;
+			schema = this;
+			
+			for (x = 0, xl = SchemaTransformers.length; x < xl; ++x) {
+				schema = SchemaTransformers[x](schema, report) || schema;
+			}
+				
 			schemaUri = schema.getURI();
 			ji = ji instanceof JSONInstance ? ji : getInstance(ji);
 			uri = ji.getURI();
+			registry = ji.getRegistry();
 			report = report || {
 				path : [],
-				validated : {},
 				errors : [],
 				instance : ji,
 				schema : schema
 			};
 			
-			if (!report.validated[uri] || report.validated[uri].indexOf(schemaUri) === -1) {
-				if (!report.validated[uri]) {
-					report.validated[uri] = [ schemaUri ];
-				} else {
-					report.validated[uri].push(schemaUri);
+			if (!registry.isValidatedBy(uri, schemaUri)) {
+				registry.registerValidation(uri, schemaUri);
+				
+				if (!schema.equals(this)) {
+					HYPERSCHEMA_SCHEMA.validate(schema, report);
+				}
+
+				properties = this.getProperties();
+				
+				for (x = 0, xl = RequiredAttributeValidators.length; x < xl; ++x) {
+					properties[RequiredAttributeValidators[x]] = true;
 				}
 				
-				for (x = 0, xl = SchemaTransformers.length; x < xl; ++x) {
-					schema = SchemaTransformers[x](schema, report) || schema;
-				}
-				
-				if (schema === this) {
-					properties = this.getProperties();
-					
-					for (x = 0, xl = RequiredAttributeValidators.length; x < xl; ++x) {
-						properties[RequiredAttributeValidators[x]] = true;
-					}
-					
-					for (key in properties) {
-						if (properties[key] !== O[key]) {
-							if (AttributeValidators[key] !== O[key]) {
-								AttributeValidators[key](ji, schema, report);
-							}
-							if (pji && PropertyAttributeValidators[key] !== O[key]) {
-								PropertyAttributeValidators[key](ji, schema, pji, report);
-							}
+				for (key in properties) {
+					if (properties[key] !== O[key]) {
+						if (AttributeValidators[key] !== O[key]) {
+							AttributeValidators[key](ji, schema, report);
+						}
+						if (pji && PropertyAttributeValidators[key] !== O[key]) {
+							PropertyAttributeValidators[key](ji, schema, pji, report);
 						}
 					}
-				} else {
-					schema.validate(ji, report);
 				}
 			}
 			
@@ -946,7 +1024,7 @@
 	 */
 	
 	GLOBAL_REGISTRY = new JSONRegistry();
-	
+	/*
 	JSONSCHEMA_SCHEMA = new JSONInstance({}, 'http://json-schema.org/schema', GLOBAL_REGISTRY);
 	
 	function buildSchema(uri, json, schemaUri) {
@@ -1011,6 +1089,275 @@
 	buildSchema('#.properties.default.optional', true, '#.properties.optional');
 	buildSchema('#.optional', true, '#.properties.optional');
 	buildSchema('#.default', {}, '#.properties.default');
+	*/
+	
+	JSONSCHEMA_SCHEMA = new JSONInstance({
+		"$schema" : "http://json-schema.org/hyper-schema#",
+		"id" : "http://json-schema.org/schema#",
+		"type" : "object",
+		
+		"properties" : {
+			"type" : {
+				"type" : ["string", "array"],
+				"items" : {
+					"type" : ["string", {"$ref" : "#"}]
+				},
+				"optional" : true,
+				"uniqueItems" : true,
+				"default" : "any"
+			},
+			
+			"properties" : {
+				"type" : "object",
+				"additionalProperties" : {"$ref" : "#"},
+				"optional" : true,
+				"default" : {}
+			},
+			
+			"items" : {
+				"type" : [{"$ref" : "#"}, "array"],
+				"items" : {"$ref" : "#"},
+				"optional" : true,
+				"default" : {}
+			},
+			
+			"optional" : {
+				"type" : "boolean",
+				"optional" : true,
+				"default" : false
+			},
+			
+			"additionalProperties" : {
+				"type" : [{"$ref" : "#"}, "boolean"],
+				"optional" : true,
+				"default" : {}
+			},
+			
+			"requires" : {
+				"type" : ["string", {"$ref" : "#"}],
+				"optional" : true
+			},
+			
+			"minimum" : {
+				"type" : "number",
+				"optional" : true
+			},
+			
+			"maximum" : {
+				"type" : "number",
+				"optional" : true
+			},
+			
+			"minimumCanEqual" : {
+				"type" : "boolean",
+				"optional" : true,
+				"requires" : "minimum",
+				"default" : true
+			},
+			
+			"maximumCanEqual" : {
+				"type" : "boolean",
+				"optional" : true,
+				"requires" : "maximum",
+				"default" : true
+			},
+			
+			"minItems" : {
+				"type" : "integer",
+				"optional" : true,
+				"minimum" : 0,
+				"default" : 0
+			},
+			
+			"maxItems" : {
+				"type" : "integer",
+				"optional" : true
+			},
+			
+			"uniqueItems" : {
+				"type" : "boolean",
+				"optional" : true,
+				"default" : false
+			},
+			
+			"pattern" : {
+				"type" : "string",
+				"optional" : true,
+				"format" : "regex"
+			},
+			
+			"minLength" : {
+				"type" : "integer",
+				"optional" : true,
+				"minimum" : 0,
+				"default" : 0
+			},
+			
+			"maxLength" : {
+				"type" : "integer",
+				"optional" : true
+			},
+			
+			"enum" : {
+				"type" : "array",
+				"optional" : true,
+				"minItems" : 1,
+				"uniqueItems" : true
+			},
+			
+			"title" : {
+				"type" : "string",
+				"optional" : true
+			},
+			
+			"description" : {
+				"type" : "string",
+				"optional" : true
+			},
+			
+			"format" : {
+				"type" : "string",
+				"optional" : true
+			},
+			
+			"contentEncoding" : {
+				"type" : "string",
+				"optional" : true
+			},
+			
+			"default" : {
+				"type" : "any",
+				"optional" : true
+			},
+			
+			"divisibleBy" : {
+				"type" : "number",
+				"minimum" : 0,
+				"minimumCanEqual" : false,
+				"optional" : true,
+				"default" : 1
+			},
+			
+			"disallow" : {
+				"type" : ["string", "array"],
+				"items" : {"type" : "string"},
+				"optional" : true,
+				"uniqueItems" : true
+			},
+			
+			"extends" : {
+				"type" : [{"$ref" : "#"}, "array"],
+				"items" : {"$ref" : "#"},
+				"optional" : true,
+				"default" : {}
+			},
+		},
+		
+		"optional" : true,
+		"default" : {}
+	}, 'http://json-schema.org/schema', GLOBAL_REGISTRY);
+	
+	HYPERSCHEMA_SCHEMA = new JSONInstance({
+		"$schema" : "http://json-schema.org/hyper-schema#",
+		"id" : "http://json-schema.org/hyper-schema#",
+	
+		"properties" : {
+			"links" : {
+				"type" : "array",
+				"items" : {"$ref" : "http://json-schema.org/links#"},
+				"optional" : true
+			},
+			
+			"fragmentResolution" : {
+				"type" : "string",
+				"optional" : true,
+				"default" : "slash-delimited"
+			},
+			
+			"root" : {
+				"type" : "boolean",
+				"optional" : true,
+				"default" : false
+			},
+			
+			"readonly" : {
+				"type" : "boolean",
+				"optional" : true,
+				"default" : false
+			},
+			
+			"pathStart" : {
+				"type" : "string",
+				"optional" : true,
+				"format" : "uri"
+			},
+			
+			"mediaType" : {
+				"type" : "string",
+				"optional" : true,
+				"format" : "media-type"
+			},
+			
+			"alternate" : {
+				"type" : "array",
+				"items" : {"$ref" : "#"},
+				"optional" : true
+			}
+		},
+		
+		"links" : [
+			{
+				"href" : "{$ref}",
+				"rel" : "full"
+			},
+			
+			{
+				"href" : "{$schema}",
+				"rel" : "definedby"
+			},
+			
+			{
+				"href" : "{id}",
+				"rel" : "self"
+			}
+		],
+		
+		"fragmentResolution" : "dot-delimited",
+		"extends" : {"$ref" : "http://json-schema.org/schema#"}
+	}, 'http://json-schema.org/hyper-schema', GLOBAL_REGISTRY);
+	
+	LINKS_SCHEMA = new JSONInstance({
+		"$schema" : "http://json-schema.org/hyper-schema#",
+		"id" : "http://json-schema.org/links#",
+		"type" : "object",
+		
+		"properties" : {
+			"href" : {
+				"type" : "string"
+			},
+			
+			"rel" : {
+				"type" : "string"
+			},
+			
+			"targetSchema" : {"$ref" : "http://json-schema.org/hyper-schema#"},
+			
+			"method" : {
+				"type" : "string",
+				"default" : "GET"
+			},
+			
+			"enctype" : {
+				"type" : "string",
+				"requires" : "method"
+			},
+			
+			"properties" : {
+				"type" : "object",
+				"additionalProperties" : {"$ref" : "http://json-schema.org/hyper-schema#"}
+			}
+		}
+	}, 'http://json-schema.org/links', GLOBAL_REGISTRY);
 	
 	EMPTY_SCHEMA = new JSONInstance({}, 'http://json-schema.org/empty-schema', GLOBAL_REGISTRY);
 	
@@ -1023,21 +1370,32 @@
 		JSONInstance : JSONInstance,
 		globalRegistry : GLOBAL_REGISTRY,
 		JSONSCHEMA_SCHEMA : JSONSCHEMA_SCHEMA,
+		HYPERSCHEMA_SCHEMA : HYPERSCHEMA_SCHEMA,
+		LINKS_SCHEMA : LINKS_SCHEMA,
 		EMPTY_SCHEMA : EMPTY_SCHEMA,
 		
-		validate : function (json, schema) {
+		validate : function (json, schema, schemaSchema) {
 			var registry = new JSONRegistry(this.globalRegistry),
 				report;
 			
+			schemaSchema = schemaSchema || HYPERSCHEMA_SCHEMA;
+			
 			schema = schema instanceof JSONInstance ? schema : (schema ? getInstance(schema, null, registry) : EMPTY_SCHEMA);
-			report = JSONSCHEMA_SCHEMA.validate(schema);
+			report = schemaSchema.validate(schema);
+			report.schema = schema;
 			
 			json = json instanceof JSONInstance ? json : getInstance(json, null, registry);
+			report.instance = json;
 			return schema.validate(json, report);
 		}
 		
 	};
 	
 	exports.JSONValidator = JSONValidator;
+	
+	JSONValidator.validate(JSONValidator.HYPERSCHEMA_SCHEMA, JSONValidator.HYPERSCHEMA_SCHEMA);
+	JSONValidator.validate(JSONValidator.JSONSCHEMA_SCHEMA, JSONValidator.HYPERSCHEMA_SCHEMA);
+	JSONValidator.validate(JSONValidator.LINKS_SCHEMA, JSONValidator.HYPERSCHEMA_SCHEMA);
+	JSONValidator.validate(JSONValidator.EMPTY_SCHEMA, JSONValidator.HYPERSCHEMA_SCHEMA);
 	
 }());

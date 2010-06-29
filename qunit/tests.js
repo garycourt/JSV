@@ -140,7 +140,7 @@ test("Minimum/Maximum Validation", function () {
 
 test("MinimumCanEqual/MaximumCanEqual Validation", function () {
 	//true
-	equal(JSONValidator.validate(0, { minimumCanEqual : true, maximumCanEqual : true }).errors.length, 0);
+	notEqual(JSONValidator.validate(0, { minimumCanEqual : true, maximumCanEqual : true }).errors.length, 0);  //illegal
 	equal(JSONValidator.validate(1, { minimum : 1, maximum : 10, minimumCanEqual : true, maximumCanEqual : true }).errors.length, 0);
 	equal(JSONValidator.validate(5, { minimum : 1, maximum : 10, minimumCanEqual : true, maximumCanEqual : true  }).errors.length, 0);
 	equal(JSONValidator.validate(10, { minimum : 1, maximum : 10, minimumCanEqual : true, maximumCanEqual : true  }).errors.length, 0);
@@ -150,7 +150,7 @@ test("MinimumCanEqual/MaximumCanEqual Validation", function () {
 	notEqual(JSONValidator.validate(11, { minimum : 1, maximum : 10, minimumCanEqual : true, maximumCanEqual : true  }).errors.length, 0);
 	
 	//false
-	equal(JSONValidator.validate(0, { minimumCanEqual : false, maximumCanEqual : false }).errors.length, 0);
+	notEqual(JSONValidator.validate(0, { minimumCanEqual : false, maximumCanEqual : false }).errors.length, 0);  //illegal
 	equal(JSONValidator.validate(1.0001, { minimum : 1, maximum : 10, minimumCanEqual : false, maximumCanEqual : false  }).errors.length, 0);
 	equal(JSONValidator.validate(5, { minimum : 1, maximum : 10, minimumCanEqual : false, maximumCanEqual : false  }).errors.length, 0);
 	equal(JSONValidator.validate(9.9999, { minimum : 1, maximum : 10, minimumCanEqual : false, maximumCanEqual : false  }).errors.length, 0);
@@ -276,6 +276,10 @@ test("Extends Validation", function () {
 
 test("JSON Schema Validation", function () {
 	equal(JSONValidator.JSONSCHEMA_SCHEMA.validate(JSONValidator.JSONSCHEMA_SCHEMA).errors.length, 0);
+});
+
+test("Links Validation", function () {
+	
 });
 
 //test("", function () {});
