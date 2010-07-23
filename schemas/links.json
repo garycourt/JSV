@@ -16,17 +16,20 @@
 		
 		"method" : {
 			"type" : "string",
-			"default" : "GET"
+			"default" : "GET",
+			"optional" : true
 		},
 		
 		"enctype" : {
 			"type" : "string",
-			"requires" : "method"
+			"requires" : "method",
+			"optional" : true
 		},
 		
 		"properties" : {
 			"type" : "object",
-			"additionalProperties" : {"$ref" : "http://json-schema.org/hyper-schema#"}
+			"additionalProperties" : {"$ref" : "http://json-schema.org/hyper-schema#"},
+			"optional" : true
 		}
 	}
 }

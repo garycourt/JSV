@@ -157,7 +157,7 @@
 			"items" : {"$ref" : "#"},
 			"optional" : true,
 			"default" : {}
-		},
+		}
 	},
 	
 	"optional" : true,

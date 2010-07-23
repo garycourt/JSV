@@ -1,4 +1,4 @@
-"use strict";
+/*jslint white: true, onevar: true, undef: true, eqeqeq: true, newcap: true, immed: true */
 
 var exports = exports || this,
 	require = require || function () {
@@ -26,7 +26,7 @@ var exports = exports || this,
 		JSONInstance,
 		JSONValidator;
 	
-	function typeOf (o) {
+	function typeOf(o) {
 		return o === undefined ? 'undefined' : (o === null ? 'null' : Object.prototype.toString.call(o).split(' ').pop().split(']').shift().toLowerCase());
 	}
 	
@@ -40,7 +40,7 @@ var exports = exports || this,
 	function cloneArray(o) {
 		return Array.prototype.slice.call(o);
 	}
-	
+	/*
 	function mixin(obj, props) {
 		var key;
 		for (key in props) {
@@ -60,19 +60,19 @@ var exports = exports || this,
 		}
 		return newObj;
 	}
-	
+	*/
+	function mapArray(arr, func, scope) {
+		var x = 0, xl = arr.length, newArr = new Array(xl);
+		for (; x < xl; ++x) {
+			newArr[x] = func.call(scope, arr[x], x, arr);
+		}
+		return newArr;
+	}
+		
 	if (Array.prototype.map) {
-		function mapArray(arr, func, scope) {
+		mapArray = function (arr, func, scope) {
 			return Array.prototype.map.call(arr, func, scope);
-		}
-	} else {
-		function mapArray(arr, func, scope) {
-			var x = 0, xl = arr.length, newArr = Array(xl);
-			for (; x < xl; ++x) {
-				newArr[x] = func.call(scope, arr[x], x, arr);
-			}
-			return newArr;
-		}
+		};
 	}
 	
 	function toArray(o) {
@@ -172,7 +172,7 @@ var exports = exports || this,
 		},
 		
 		'integer' : function (ji, report) {
-			return ji.getPrimitiveType() === 'integer' || (ji.getPrimitiveType() === 'number' && ji.getValue().toString().indexOf('.') === -1);
+			return ji.getPrimitiveType() === 'number' && ji.getValue().toString().indexOf('.') === -1;
 		},
 		
 		'boolean' : function (ji, report) {
@@ -390,7 +390,7 @@ var exports = exports || this,
 		},
 		
 		'enum' : function (ji, requiredSchema, report) {
-			var enums = requiredSchema.enums();
+			var enums = requiredSchema.enums(), x, xl;
 			if (enums) {
 				for (x = 0, xl = enums.length; x < xl; ++x) {
 					if (ji.equals(enums[x])) {
@@ -593,7 +593,7 @@ var exports = exports || this,
 	 */
 	
 	JSONInstance = function (json, uri, registry) {
-		var key, x, xl, propertyUri;
+		var key, x, xl;
 		
 		this._type = typeOf(json);
 		this._uri = uri ? (uri.indexOf('#') !== -1 ? uri : uri + '#') : 'urn:uuid:' + randomUUID() + '#';
@@ -709,7 +709,7 @@ var exports = exports || this,
 		},
 		
 		setPropertyByPath : function (path, value) {
-			var key, value;
+			var key;
 			path = path.split('.');
 			if (path.length === 1) {
 				return this.setProperty(path[0], value);
@@ -779,7 +779,7 @@ var exports = exports || this,
 			var type = this.getProperty('type'),
 				primitiveType = type.getPrimitiveType();
 			if (primitiveType === 'string') {
-				return [ type.getValue() ]
+				return [ type.getValue() ];
 			} else if (primitiveType === 'array') {
 				type = type.getProperties();
 				return mapArray(type, function (instance) {
@@ -838,13 +838,13 @@ var exports = exports || this,
 				maxEqual = this.getValueOfProperty('maximumCanEqual');
 			return {
 				minimum : this.getValueOfProperty('minimum'),
-				maximum :this.getValueOfProperty('maximum'),
+				maximum : this.getValueOfProperty('maximum'),
 				minimumCanEqual : typeof minEqual !== 'boolean' || minEqual,
 				maximumCanEqual : typeof maxEqual !== 'boolean' || maxEqual,
 				minItems : this.getValueOfProperty('minItems') || 0,
 				maxItems : this.getValueOfProperty('maxItems'),
 				minLength : this.getValueOfProperty('minLength') || 0,
-				maxLength : this.getValueOfProperty('maxLength'),
+				maxLength : this.getValueOfProperty('maxLength')
 			};
 		},
 		
@@ -903,6 +903,21 @@ var exports = exports || this,
 				thisValue,
 				instance;
 			
+			function merge(base, extra, isSchema) {
+				var key;
+				for (key in extra) {
+					if (extra[key] !== O[key]) {
+						if (isSchema && key === 'extends') {
+							base[key] = toArray(base[key]).concat(toArray(extra[key]));
+						} else if (typeOf(base[key]) === 'object' && typeOf(extra[key]) === 'object') {
+							merge(base[key], extra[key], !isSchema || key !== 'properties');  //FIXME: An attribute other then "properties" may be a plain object
+						} else {
+							base[key] = extra[key];
+						}
+					}
+				}
+			}
+			
 			if (this.getPrimitiveType() === 'object' && extendsProperty && extendsProperty.getPrimitiveType() === 'object') {
 				extendedSchema = HYPERSCHEMA_SCHEMA.getFull(extendsProperty).getExtendedSchema();
 				extendedUri = this.getURI() + '(' + escapeURIComponent(extendedSchema.getURI()) + ')';
@@ -914,21 +929,6 @@ var exports = exports || this,
 				
 				extended = extendedSchema.getValue();
 				thisValue = this.getValue();
-				
-				function merge(base, extra, isSchema) {
-					var key;
-					for (key in extra) {
-						if (extra[key] !== O[key]) {
-							if (isSchema && key === 'extends') {
-								base[key] = toArray(base[key]).concat(toArray(extra[key]));
-							} else if (typeOf(base[key]) === 'object' && typeOf(extra[key]) === 'object') {
-								merge(base[key], extra[key], !isSchema || key !== 'properties');  //FIXME: An attribute other then "properties" may be a plain object
-							} else {
-								base[key] = extra[key];
-							}
-						}
-					}
-				}
 				
 				merge(extended, thisValue, true);
 				instance = getInstance(extended, extendedUri, this.getRegistry());
@@ -967,6 +967,9 @@ var exports = exports || this,
 				});
 				if (href) {
 					uri = URL.resolve(instance.getURI(), href);
+					if (uri.indexOf('#') === -1) {
+						uri += '#';  //HACK
+					}
 					return instance.getRegistry().getInstanceByURI(uri);
 				}
 			}
@@ -981,7 +984,7 @@ var exports = exports || this,
 		},
 		*/
 		validate : function (ji, report, pji) {
-			var schema, scemaUri, uri, registry, x, xl, properties, key;
+			var schema, schemaUri, uri, registry, x, xl, properties, key;
 			schema = this;
 			
 			for (x = 0, xl = SchemaTransformers.length; x < xl; ++x) {
@@ -1005,7 +1008,7 @@ var exports = exports || this,
 					HYPERSCHEMA_SCHEMA.validate(schema, report);
 				}
 
-				properties = this.getProperties();
+				properties = schema.getProperties();
 				
 				for (x = 0, xl = RequiredAttributeValidators.length; x < xl; ++x) {
 					properties[RequiredAttributeValidators[x]] = true;
@@ -1193,7 +1196,7 @@ var exports = exports || this,
 				"items" : {"$ref" : "#"},
 				"optional" : true,
 				"default" : {}
-			},
+			}
 		},
 		
 		"optional" : true,
@@ -1287,17 +1290,20 @@ var exports = exports || this,
 			
 			"method" : {
 				"type" : "string",
-				"default" : "GET"
+				"default" : "GET",
+				"optional" : true
 			},
 			
 			"enctype" : {
 				"type" : "string",
-				"requires" : "method"
+				"requires" : "method",
+				"optional" : true
 			},
 			
 			"properties" : {
 				"type" : "object",
-				"additionalProperties" : {"$ref" : "http://json-schema.org/hyper-schema#"}
+				"additionalProperties" : {"$ref" : "http://json-schema.org/hyper-schema#"},
+				"optional" : true
 			}
 		}
 	}, 'http://json-schema.org/links', GLOBAL_REGISTRY);
@@ -1317,11 +1323,14 @@ var exports = exports || this,
 		LINKS_SCHEMA : LINKS_SCHEMA,
 		EMPTY_SCHEMA : EMPTY_SCHEMA,
 		
-		validate : function (json, schema, schemaSchema) {
+		registerSchema : function (json, uri) {
+			return HYPERSCHEMA_SCHEMA.validate(getInstance(json, uri, GLOBAL_REGISTRY));
+		},
+		
+		validate : function (json, schema) {
 			var registry = new JSONRegistry(this.globalRegistry),
-				report;
-			
-			schemaSchema = HYPERSCHEMA_SCHEMA;  //TODO: Make validator more generic
+				report,
+				schemaSchema = HYPERSCHEMA_SCHEMA;  //TODO: Make validator more generic
 			
 			schema = schema instanceof JSONInstance ? schema : (schema ? getInstance(schema, null, registry) : EMPTY_SCHEMA);
 			report = schemaSchema.validate(schema);

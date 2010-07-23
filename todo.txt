@@ -1,3 +1,6 @@
+-write README
+-choose a license
+-get "describedby" links working in JSON instances
 -change attributes names to uris, and do lookups based on schema schema.
 
 Spec changes:

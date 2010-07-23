@@ -280,8 +280,24 @@ test("JSON Schema Validation", function () {
 
 test("Links Validation", function () {
 	//full
+	equal(JSONValidator.validate({ 'a' : {} }, { 'type' : 'object', 'additionalProperties' : { '$ref' : '#' } }).errors.length, 0);
+	notEqual(JSONValidator.validate({ 'a' : 1 }, { 'type' : 'object', 'additionalProperties' : { '$ref' : '#' } }).errors.length, 0);
+	
 	//describedby
+	/* "describedby" currently only works for schemas
+	equal(JSONValidator.validate(
+		{ 'a' : { '$schema' : { 'type' : 'object' } } }, 
+		{ 'type' : 'object', 'additionalProperties' : { 'type' : 'string', 'links' : [{"href" : "{$schema}", "rel" : "describedby"}] } }
+	).errors.length, 0);
+	*/
+	
 	//self
+});
+
+test("Register Schemas", function () {
+	equal(JSONValidator.registerSchema({'type' : 'string'}, 'http://test.example.com/1').errors.length, 0);
+	equal(JSONValidator.validate('', { '$ref' : 'http://test.example.com/1' }).errors.length, 0);
+	notEqual(JSONValidator.validate({}, { '$ref' : 'http://test.example.com/1' }).errors.length, 0);
 });
 
 //test("", function () {});
