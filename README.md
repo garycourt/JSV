@@ -16,24 +16,22 @@ JSV is currently in beta; use at your own risk as there still may be bugs presen
 
 Here's an example on how to validate some JSON with the JSON Schema Validator:
 
-`
-var JSV = require("./jsv").JSV;
-var json = {};
-var schema = {"type" : "object"};
-var report = JSV.validate(json, schema);
-
-if (report.errors.length === 0) {
-	//JSON is valid against the schema
-}
-`
+	var JSV = require("./jsv").JSV;
+	var json = {};
+	var schema = {"type" : "object"};
+	var report = JSV.validate(json, schema);
+	
+	if (report.errors.length === 0) {
+		//JSON is valid against the schema
+	}
 
 ## APIs
 
-*This still needs to be written*
+*This still needs to be written.*
 
 ## Running unit tests
 
-Open `quint/index.html` in your web browser to run the unit tests.
+Open `qunit/index.html` in your web browser to run the unit tests.
 
 ## Requirements
 
