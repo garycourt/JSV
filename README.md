@@ -1,5 +1,5 @@
-JSON Schema (Revision 2) Validator
-==================================
+JSV: JSON Schema (Revision 2) Validator
+=======================================
 
 JSV is a JavaScript implementation of a extendable, fully compliant revision 2 JSON Schema validator with the following features:
 
@@ -17,10 +17,10 @@ JSV is currently in beta; use at your own risk as there still may be bugs presen
 Here's an example on how to validate some JSON with the JSON Schema Validator:
 
 `
-var JSONValidator = require("./jsv").JSONValidator;
+var JSV = require("./jsv").JSV;
 var json = {};
 var schema = {"type" : "object"};
-var report = JSONValidator.validate(json, schema);
+var report = JSV.validate(json, schema);
 
 if (report.errors.length === 0) {
 	//JSON is valid against the schema
@@ -37,10 +37,10 @@ Open `quint/index.html` in your web browser to run the unit tests.
 
 ## Requirements
 
-The JSON Schema Validator is written assuming the JavaScript environment uses CommonJS's Module/1.0 system (or, more specifically, a Node.js environment).
+JSV is written assuming the JavaScript environment uses CommonJS's Module/1.0 system (or, more specifically, a Node.js environment).
 If this system is not available (such as the case in a web browser), the library will attempt to emulate it as best as possible;
 However, the code in `url.js` must be in the same global environment as the validator for the module emulation to work. 
 
 ## License
 
-The JSON Schema Validator is licensed under the FreeBSD License.
+JSV is licensed under the FreeBSD License.

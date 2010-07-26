@@ -52,7 +52,7 @@ var exports = exports || this,
 		SchemaTransformers,
 		JSONRegistry,
 		JSONInstance,
-		JSONValidator;
+		JSV;
 	
 	function typeOf(o) {
 		return o === undefined ? 'undefined' : (o === null ? 'null' : Object.prototype.toString.call(o).split(' ').pop().split(']').shift().toLowerCase());
@@ -1339,10 +1339,10 @@ var exports = exports || this,
 	EMPTY_SCHEMA = new JSONInstance({}, 'http://json-schema.org/empty-schema', GLOBAL_REGISTRY);
 	
 	/*
-	 * JSONValidator
+	 * JSV
 	 */
 	
-	JSONValidator = {
+	JSV = {
 		
 		JSONInstance : JSONInstance,
 		globalRegistry : GLOBAL_REGISTRY,
@@ -1371,7 +1371,7 @@ var exports = exports || this,
 		
 	};
 	
-	exports.JSONValidator = JSONValidator;
+	exports.JSV = JSV;
 	
 	function assertNoErrors(report, uri) {
 		if (report.errors.length) {
@@ -1379,9 +1379,9 @@ var exports = exports || this,
 		}
 	}
 	
-	assertNoErrors(JSONValidator.validate(JSONValidator.HYPERSCHEMA_SCHEMA, JSONValidator.HYPERSCHEMA_SCHEMA), JSONValidator.HYPERSCHEMA_SCHEMA.getURI());
-	assertNoErrors(JSONValidator.validate(JSONValidator.JSONSCHEMA_SCHEMA, JSONValidator.HYPERSCHEMA_SCHEMA), JSONValidator.JSONSCHEMA_SCHEMA.getURI());
-	assertNoErrors(JSONValidator.validate(JSONValidator.LINKS_SCHEMA, JSONValidator.HYPERSCHEMA_SCHEMA), JSONValidator.LINKS_SCHEMA.getURI());
-	assertNoErrors(JSONValidator.validate(JSONValidator.EMPTY_SCHEMA, JSONValidator.HYPERSCHEMA_SCHEMA), JSONValidator.EMPTY_SCHEMA.getURI());
+	assertNoErrors(JSV.validate(JSV.HYPERSCHEMA_SCHEMA, JSV.HYPERSCHEMA_SCHEMA), JSV.HYPERSCHEMA_SCHEMA.getURI());
+	assertNoErrors(JSV.validate(JSV.JSONSCHEMA_SCHEMA, JSV.HYPERSCHEMA_SCHEMA), JSV.JSONSCHEMA_SCHEMA.getURI());
+	assertNoErrors(JSV.validate(JSV.LINKS_SCHEMA, JSV.HYPERSCHEMA_SCHEMA), JSV.LINKS_SCHEMA.getURI());
+	assertNoErrors(JSV.validate(JSV.EMPTY_SCHEMA, JSV.HYPERSCHEMA_SCHEMA), JSV.EMPTY_SCHEMA.getURI());
 	
 }());
