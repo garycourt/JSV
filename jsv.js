@@ -1355,23 +1355,28 @@ var exports = exports || this,
 			return HYPERSCHEMA_SCHEMA.validate(getInstance(json, uri, GLOBAL_REGISTRY));
 		},
 		
-		validate : function (json, schema) {
+		validateWithURI : function (json, jsonURI, schema, schemaURI) {
 			var registry = new JSONRegistry(this.globalRegistry),
 				report,
 				schemaSchema = HYPERSCHEMA_SCHEMA;  //TODO: Make validator more generic
 			
-			schema = schema instanceof JSONInstance ? schema : (schema ? getInstance(schema, null, registry) : EMPTY_SCHEMA);
+			schema = schema instanceof JSONInstance ? schema : (schema ? getInstance(schema, jsonURI, registry) : EMPTY_SCHEMA);
 			report = schemaSchema.validate(schema);
 			report.schema = schema;
 			
-			json = json instanceof JSONInstance ? json : getInstance(json, null, registry);
+			json = json instanceof JSONInstance ? json : getInstance(json, schemaURI, registry);
 			report.instance = json;
 			return schema.validate(json, report);
+		},
+		
+		validate : function (json, schema) {
+			return JSV.validateWithURI(json, null, schema, null);
 		}
 		
 	};
 	
-	exports.JSV = JSV;
+	this.JSV = JSV;  //set global object
+	exports.JSV = JSV;  //export to CommonJS
 	
 	function assertNoErrors(report, uri) {
 		if (report.errors.length) {
