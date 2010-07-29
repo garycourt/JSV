@@ -141,4 +141,4 @@ However, the code in `url.js` must be in the same global environment as the vali
 
 ## License
 
-JSV is licensed under the FreeBSD License.
+JSV is licensed under the FreeBSD License. 
