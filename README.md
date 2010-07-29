@@ -66,7 +66,7 @@ Report objects have the following schema:
 		"properties" : {
 			"errors" : {
 				"title" : "Validation Errors",
-				"description" : "An array of error objects from the validation process. Each object represents a restriction check that failed."
+				"description" : "An array of error objects from the validation process. Each object represents a restriction check that failed.",
 				"type" : "array",
 				"items" : {
 					"type" : "object",
