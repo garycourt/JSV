@@ -1,3 +1,12 @@
+/**
+ * JSV: JSON Schema (Revision 2) Validator
+ * 
+ * @fileOverview A JavaScript implementation of a extendable, fully compliant revision 2 JSON Schema validator.
+ * @author <a href="mailto:gary.court@gmail.com">Gary Court</a>
+ * @version 2.0
+ * @see http://github.com/garycourt/JSV
+ */
+
 /*
  * Copyright 2010 Gary Court. All rights reserved.
  * 
