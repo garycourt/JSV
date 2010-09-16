@@ -78,7 +78,8 @@
 		
 		"maxItems" : {
 			"type" : "integer",
-			"optional" : true
+			"optional" : true,
+			"minimum" : 0
 		},
 		
 		"uniqueItems" : {
