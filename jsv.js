@@ -51,7 +51,8 @@ var exports = exports || this,
 		DEFAULT_ENVIRONMENT_ID,
 		JSV,
 		
-		DRAFT_02_ENVIRONMENT;
+		DRAFT_02_ENVIRONMENT,
+		DRAFT_02_SCHEMA;
 	
 	//
 	// Utility functions
@@ -155,58 +156,223 @@ var exports = exports || this,
 		return encodeURIComponent(str).replace(/!/g, '%21').replace(/'/g, '%27').replace(/\(/g, '%28').replace(/\)/g, '%29').replace(/\*/g, '%2A');
 	}
 	
-	function error(report, instanceURI, schemaURI, attr, message, details) {
-		report.errors.push({
+	function formatURI(uri) {
+		if (typeof uri === "string" && uri.indexOf("#") === -1) {
+			uri += "#";
+		}
+		return uri;
+	}
+	
+	//
+	// Report class
+	//
+	
+	function Report() {
+		this.errors = [];
+	}
+	
+	Report.prototype.addError = function (instanceURI, schemaURI, attr, message, details) {
+		this.errors.push({
 			uri : instanceURI,
 			schemaUri : schemaURI,
 			attribute : attr,
 			message : message,
 			details : details
 		});
-	}
+	};
 	
 	//
 	// JSONInstance class
 	//
 	
-	function JSONInstance(env, json) {}
+	function JSONInstance(env, json, uri) {
+		if (json instanceof JSONInstance) {
+			if (typeof uri !== "string") {
+				uri = json._uri;
+			}
+			json = json._value;
+		}
+		
+		if (typeof uri === "string") {
+			uri = formatURI(uri);
+		} else {
+			uri = "urn:uuid:" + randomUUID() + "#";
+		}
+		
+		this._env = env;
+		this._value = json;
+		this._uri = uri;
+	}
+	
+	JSONInstance.prototype.getEnvironment = function () {
+		return this._env;
+	};
+	
+	JSONInstance.prototype.getType = function () {
+		return typeOf(this._value);
+	};
+	
+	JSONInstance.prototype.getValue = function () {
+		return this._value;
+	};
+	
+	JSONInstance.prototype.getURI = function () {
+		return this._uri;
+	};
+	
+	JSONInstance.prototype.resolveURI = function (uri) {
+		return uri = formatURI(URL.resolve(this._uri, uri));
+	};
+	
+	JSONInstance.prototype.getProperty = function (key) {
+		return new JSONInstance(this._env, (this._value ? this._value[key] : undefined), this._uri + "." + key);
+	};
+	
+	JSONInstance.prototype.getProperties = function () {
+		var type = typeOf(this._value),
+			self = this;
+		
+		if (type === 'object') {
+			return mapObject(this._value, function (value, key) {
+				return new JSONInstance(self._env, value, self._uri + "." + key);
+			});
+		} else if (type === 'array') {
+			return mapArray(this._value, function (value, key) {
+				return new JSONInstance(self._env, value, self._uri + "." + key);
+			});
+		}
+	};
+	
+	JSONInstance.prototype.getValueOfProperty = function (key) {
+		return this.getProperty(key).getValue();
+	};
+	
+	JSONInstance.prototype.equals = function (instance) {
+		if (instance instanceof JSONInstance) {
+			return this._value === instance._value;
+		}
+		//else
+		return this._value === instance;
+	};
 	
 	//
 	// JSONSchema class
 	//
 	
-	function JSONSchema(env, json, schema) {}
+	function JSONSchema(env, json, uri, schema) {
+		JSONInstance.call(this, env, json, uri);
+		
+		if (json instanceof JSONSchema) {
+			this._schema = json._schema;  //TODO: Make sure cross environments don't mess everything up
+		} else {
+			this._schema = schema instanceof JSONSchema ? schema : this._env.getDefaultSchema() || JSONSchema.createEmptySchema();
+		}
+	}
 	
-	JSONSchema.prototype.validate = function (instance) {};
+	JSONSchema.prototype = createObject(JSONInstance.prototype);
+	
+	JSONSchema.createEmptySchema = function (env) {
+		var schema = createObject(JSONSchema.prototype);
+		JSONInstance.call(schema, env, {}, undefined);
+		schema._schema = schema;
+		return schema;
+	};
+	
+	JSONSchema.prototype.getSchema = function () {
+		//TODO: Check for "describedby" links
+		return this._schema;
+	};
+	
+	JSONSchema.prototype.getAttribute = function (key) {
+		var schemaProperty = this.getSchema().getProperty("properties").getProperty(key),
+			parser = schemaProperty.getValueOfProperty("parser"),
+			property = this.getProperty(key);
+		if (typeof parser === "function") {
+			return parser(property, schemaProperty);
+		}
+		//else
+		return property;
+	};
+	
+	JSONSchema.prototype.validate = function (instance, report, parent, parentSchema) {
+		var schema = this,
+			schemaSchema = schema.getSchema(),
+			validator = schemaSchema.getValueOfProperty("validator");
+		
+		if (!(report instanceof Report)) {
+			report = new Report();
+		}
+		
+		validator(instance, schema, schemaSchema, report, parent, parentSchema);
+		return report;
+	};
 	
 	//
 	// Environment class
 	//
 	
-	function Environment(id) {
-		this._id = id || DEFAULT_ENVIRONMENT_ID;
-		this._instances = ENVIRONMENT[this._id] ? createObject(ENVIRONMENT[this._id]._instances) : {};
-		this._schemas = ENVIRONMENT[this._id] ? createObject(ENVIRONMENT[this._id]._schemas) : {};
-		this._defaultSchema = "";
+	function Environment() {
+		var self = this;
+		this._id = randomUUID();
+		this._instances = {};
+		this._schemas = {};
+		this._defaultSchemaURI = "";
 	}
 	
-	Environment.prototype.createInstance = function (data, schema) {};
-	Environment.prototype.createSchema = Environment.prototype.createInstance;
-	Environment.prototype.registerInstance = function (uri, instance) {};
-	Environment.prototype.registerSchema = function (uri, schema) {};
+	Environment.prototype.createInstance = function (data, uri) {
+		var instance;
+		uri = formatURI(uri);
+		
+		if (data instanceof JSONInstance && data.getURI() === uri) {
+			return data;
+		}
+		//else
+		instance = new JSONInstance(this, data, uri);
+		
+		if (typeof uri === "string" && uri.length) {
+			this._instances[uri] = instance;
+		}
+		
+		return instance;
+	};
+	
+	Environment.prototype.createSchema = function (data, schema, uri) {
+		var instance;
+		uri = formatURI(uri);
+		
+		if (data instanceof JSONSchema && data.getURI() === uri && data.getSchema().equals(schema)) {
+			return data;
+		}
+		//else
+		instance = new JSONSchema(this, data, uri, schema);
+		
+		if (typeof uri === "string" && uri.length) {
+			this._schemas[uri] = instance;
+		}
+		
+		return instance;
+	};
+	
+	Environment.prototype.createEmptySchema = function () {
+		return JSONSchema.createEmptySchema(this);
+	};
 	
 	Environment.prototype.getInstance = function (uri) {
-		return this._instances[uri];
+		return this._instances[formatURI(uri)];
 	};
 	
 	Environment.prototype.getSchema = function (uri) {
-		return this._schemas[uri];
+		return this._schemas[formatURI(uri)];
 	};
 	
-	Environment.prototype.setDefaultSchema = function (uri) {
+	Environment.prototype.setDefaultSchemaURI = function (uri) {
 		if (typeof uri === 'string') {
-			this._defaultSchema = uri;
+			this._defaultSchemaURI = formatURI(uri);
 		}
+	};
+	
+	Environment.prototype.getDefaultSchema = function () {
+		return this.getSchema(this._defaultSchemaURI);
 	};
 	
 	//
@@ -215,12 +381,21 @@ var exports = exports || this,
 	
 	JSV = {
 		createEnvironment : function (id) {
+			var env = new Environment();
 			id = id || DEFAULT_ENVIRONMENT_ID;
+			
 			if (!ENVIRONMENT[id]) {
 				throw new Error("Unknown Environment ID");
 			}
+			//else
+			env._instances = mapObject(ENVIRONMENT[id]._instances, function (value) {
+				return new JSONInstance(env, value, value._uri);
+			});
+			env._schemas = mapObject(ENVIRONMENT[id]._schemas, function (value) {
+				return new JSONSchema(env, value, value._uri, value._schema);
+			});
 			
-			return new Environment(id);
+			return env;
 		},
 		
 		Environment : Environment,
@@ -230,7 +405,9 @@ var exports = exports || this,
 				env._id = id;
 				ENVIRONMENT[id] = env;
 			}
-		}
+		},
+		
+		ENVIRONMENT : ENVIRONMENT  //TODO: Remove, debugging purposes
 	};
 	
 	this.JSV = JSV;  //set global object
@@ -240,9 +417,9 @@ var exports = exports || this,
 	// json-schema-draft-02 Environment
 	//
 	
-	DRAFT_02_ENVIRONMENT = new JSV.Environment("json-schema-draft-02");
+	DRAFT_02_ENVIRONMENT = new JSV.Environment();
 	
-	DRAFT_02_ENVIRONMENT.registerSchema("http://json-schema.org/schema", {
+	DRAFT_02_SCHEMA = DRAFT_02_ENVIRONMENT.createSchema({
 		"$schema" : "http://json-schema.org/hyper-schema#",
 		"id" : "http://json-schema.org/schema#",
 		"type" : "object",
@@ -257,12 +434,30 @@ var exports = exports || this,
 				"uniqueItems" : true,
 				"default" : "any",
 				
-				"validator" : function (ji, requiredSchema, report) {
+				"parser" : function (instance, thisSchema) {
+					var parser = arguments.callee;
+					
+					if (instance.getType() === "string") {
+						return instance.getValue();
+					} else if (instance.getType() === "object") {
+						return instance.getEnvironment().createSchema(
+							instance, 
+							instance.getEnvironment().getSchema(thisSchema.resolveURI("#"))
+						);
+					} else if (instance.getType() === "array") {
+						return mapArray(instance.getProperties(), function (prop) {
+							return parser(prop, thisSchema);
+						});
+					}
+				},
+			
+				"validator" : function (ji, requireSchema, report) {
+					/*
 					var requiredTypes = requiredSchema.types(),
 						x, xl, key, subreport;
 					
 					//for instances that are required to be a certain type
-					if (ji.getPrimitiveType() !== 'undefined' && requiredTypes && requiredTypes.length) {
+					if (ji.getType() !== 'undefined' && requiredTypes && requiredTypes.length) {
 						//ensure that type matches for at least one of the required types
 						for (x = 0, xl = requiredTypes.length; x < xl; ++x) {
 							key = requiredTypes[x];
@@ -289,35 +484,36 @@ var exports = exports || this,
 					}
 					//else, anything is allowed if no type is specified
 					return true;
+					*/
 				},
 				
 				"typeValidators" : {
 					"string" : function (ji, report) {
-						return ji.getPrimitiveType() === "string";
+						return ji.getType() === "string";
 					},
 					
 					"number" : function (ji, report) {
-						return ji.getPrimitiveType() === "number";
+						return ji.getType() === "number";
 					},
 					
 					"integer" : function (ji, report) {
-						return ji.getPrimitiveType() === "number" && ji.getValue().toString().indexOf(".") === -1;
+						return ji.getType() === "number" && ji.getValue().toString().indexOf(".") === -1;
 					},
 					
 					"boolean" : function (ji, report) {
-						return ji.getPrimitiveType() === "boolean";
+						return ji.getType() === "boolean";
 					},
 					
 					"object" : function (ji, report) {
-						return ji.getPrimitiveType() === "object";
+						return ji.getType() === "object";
 					},
 					
 					"array" : function (ji, report) {
-						return ji.getPrimitiveType() === "array";
+						return ji.getType() === "array";
 					},
 					
 					"null" : function (ji, report) {
-						return ji.getPrimitiveType() === "null";
+						return ji.getType() === "null";
 					},
 					
 					"any" : function (ji, report) {
@@ -474,9 +670,10 @@ var exports = exports || this,
 		
 		"optional" : true,
 		"default" : {}
-	});
+	}, null, "http://json-schema.org/schema#");
+	DRAFT_02_SCHEMA._schema = DRAFT_02_SCHEMA;  //TODO: Remove me after "describedby" support
 	
-	DRAFT_02_ENVIRONMENT.setDefaultSchema("http://json-schema.org/hyper-schema");
+	DRAFT_02_ENVIRONMENT.setDefaultSchemaURI("http://json-schema.org/hyper-schema#");
 	JSV.registerEnvironment("json-schema-draft-02", DRAFT_02_ENVIRONMENT);
 	
 	DEFAULT_ENVIRONMENT_ID = "json-schema-draft-02";
