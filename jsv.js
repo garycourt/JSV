@@ -288,9 +288,7 @@ var exports = exports || this,
 			json = json._value;
 		}
 		
-		if (typeof uri === "string") {
-			uri = formatURI(uri);
-		} else {
+		if (typeof uri !== "string") {
 			uri = "urn:uuid:" + randomUUID() + "#";
 		}
 		
@@ -363,7 +361,9 @@ var exports = exports || this,
 	function JSONSchema(env, json, uri, schema) {
 		JSONInstance.call(this, env, json, uri);
 		
-		if (json instanceof JSONSchema && !(schema instanceof JSONSchema)) {
+		if (schema === true) {
+			this._schema = this;
+		} else if (json instanceof JSONSchema && !(schema instanceof JSONSchema)) {
 			this._schema = json._schema;  //TODO: Make sure cross environments don't mess everything up
 		} else {
 			this._schema = schema instanceof JSONSchema ? schema : this._env.getDefaultSchema() || JSONSchema.createEmptySchema();
@@ -372,13 +372,13 @@ var exports = exports || this,
 		//check for "describedby" links
 		//if found, and different then the current schema, and has been registered,
 		//  replace it with registered schema. Repeat.
-		var link = this._schema.getLink("describedby", this);
-		while (link && this._schema.getURI() !== link && this._env.getSchema(link)) {
+		var link = this.getLink("describedby", this);
+		while (link && this._schema.getURI() !== link && this._env.findSchema(link)) {
 			//TODO: Remove me
 			console.log("Upgrading " + this._schema.getURI() + " to " + link);
 			
-			this._schema = this._env.getSchema(link);
-			link = this._schema.getLink("describedby", this);
+			this._schema = this._env.findSchema(link);
+			link = this.getLink("describedby", this);
 		}
 	}
 	
@@ -439,22 +439,12 @@ var exports = exports || this,
 	function Environment() {
 		var self = this;
 		this._id = randomUUID();
-		this._instances = {};
 		this._schemas = {};
 		this._defaultSchemaURI = "";
 	}
 	
 	Environment.prototype.clone = function () {
 		var env = new Environment();
-		/*
-		env._instances = mapObject(this._instances, function (value) {
-			return new JSONInstance(env, value, value._uri);
-		});
-		env._schemas = mapObject(this._schemas, function (value) {
-			return new JSONSchema(env, value, value._uri, value._schema);
-		});
-		*/
-		env._instances = createObject(this._instances);
 		env._schemas = createObject(this._schemas);
 		env._defaultSchemaURI = this._defaultSchemaURI;
 		
@@ -465,15 +455,11 @@ var exports = exports || this,
 		var instance;
 		uri = formatURI(uri);
 		
-		if (data instanceof JSONInstance && (!uri || data.getURI() === uri)) {  //TODO: Worry about environment here?
+		if (data instanceof JSONInstance && (!uri || data.getURI() === uri)) {
 			return data;
 		}
 		//else
 		instance = new JSONInstance(this, data, uri);
-		
-		if (typeof uri === "string" && uri.length) {
-			this._instances[uri] = instance;
-		}
 		
 		return instance;
 	};
@@ -506,7 +492,7 @@ var exports = exports || this,
 			
 			//check if schema has a "self" link
 			//if found, change URI and register schema to URI
-			link = instance.getSchema().getLink("self", instance);
+			link = instance.getLink("self", instance);
 			if (link && instance.getURI() !== link) {
 				//TODO: Remove me
 				console.log("Mapping " + instance.getURI() + " to " + link);
@@ -521,9 +507,15 @@ var exports = exports || this,
 		
 		//check if schema has a full link
 		//if found, replace with full schema
-		link = instance.getSchema().getLink("full", instance);
+		link = instance.getLink("full", instance);
 		if (link && this._schemas[link]) {
 			instance = this._schemas[link];
+			schema = instance.getSchema();
+		}
+		
+		//if schema's schema is itself, make sure it's pointing at the latest copy
+		if (instance.getURI() === instance.getSchema().getURI()) {
+			instance._schema = instance;
 		}
 		
 		return instance;
@@ -533,11 +525,7 @@ var exports = exports || this,
 		return JSONSchema.createEmptySchema(this);
 	};
 	
-	Environment.prototype.getInstance = function (uri) {
-		return this._instances[formatURI(uri)];
-	};
-	
-	Environment.prototype.getSchema = function (uri) {
+	Environment.prototype.findSchema = function (uri) {
 		return this._schemas[formatURI(uri)];
 	};
 	
@@ -548,7 +536,7 @@ var exports = exports || this,
 	};
 	
 	Environment.prototype.getDefaultSchema = function () {
-		return this.getSchema(this._defaultSchemaURI);
+		return this.findSchema(this._defaultSchemaURI);
 	};
 	
 	Environment.prototype.validate = function (instanceJSON, schemaJSON) {
@@ -684,7 +672,7 @@ var exports = exports || this,
 					} else if (instance.getType() === "object") {
 						return instance.getEnvironment().createSchema(
 							instance, 
-							self.getEnvironment().getSchema(self.resolveURI("#"))
+							self.getEnvironment().findSchema(self.resolveURI("#"))
 						);
 					} else if (instance.getType() === "array") {
 						return mapArray(instance.getProperties(), function (prop) {
@@ -746,10 +734,10 @@ var exports = exports || this,
 						uri = instance.getURI();
 					if (instance.getType() === "object") {
 						if (arg) {
-							return env.createSchema(instance.getProperty(arg), selfEnv.getSchema(self.resolveURI("#")));
+							return env.createSchema(instance.getProperty(arg), selfEnv.findSchema(self.resolveURI("#")));
 						} else {
 							return mapObject(instance.getProperties(), function (instance) {
-								return env.createSchema(instance, selfEnv.getSchema(self.resolveURI("#")));
+								return env.createSchema(instance, selfEnv.findSchema(self.resolveURI("#")));
 							});
 						}
 					}
@@ -781,10 +769,10 @@ var exports = exports || this,
 				
 				"parser" : function (instance, self) {
 					if (instance.getType() === "object") {
-						return instance.getEnvironment().createSchema(instance, self.getEnvironment().getSchema(self.resolveURI("#")));
+						return instance.getEnvironment().createSchema(instance, self.getEnvironment().findSchema(self.resolveURI("#")));
 					} else if (instance.getType() === "array") {
 						return mapArray(instance.getProperties(), function (instance) {
-							return instance.getEnvironment().createSchema(instance, self.getEnvironment().getSchema(self.resolveURI("#")));
+							return instance.getEnvironment().createSchema(instance, self.getEnvironment().findSchema(self.resolveURI("#")));
 						});
 					}
 					//else
@@ -843,7 +831,7 @@ var exports = exports || this,
 				
 				"parser" : function (instance, self) {
 					if (instance.getType() === "object") {
-						return instance.getEnvironment().createSchema(instance, self.getEnvironment().getSchema(self.resolveURI("#")));
+						return instance.getEnvironment().createSchema(instance, self.getEnvironment().findSchema(self.resolveURI("#")));
 					} else if (instance.getType() === "boolean" && instance.getValue() === false) {
 						return false;
 					}
@@ -879,7 +867,7 @@ var exports = exports || this,
 					if (instance.getType() === "string") {
 						return instance.getValue();
 					} else if (instance.getType() === "object") {
-						return instance.getEnvironment().createSchema(instance, self.getEnvironment().getSchema(self.resolveURI("#")));
+						return instance.getEnvironment().createSchema(instance, self.getEnvironment().findSchema(self.resolveURI("#")));
 					}
 				},
 				
@@ -1283,6 +1271,36 @@ var exports = exports || this,
 				},
 				
 				"typeValidators" : DRAFT_02_TYPE_VALIDATORS
+			},
+		
+			"extends" : {
+				"type" : [{"$ref" : "#"}, "array"],
+				"items" : {"$ref" : "#"},
+				"optional" : true,
+				"default" : {},
+				
+				"parser" : function (instance, self) {
+					if (instance.getType() === "object") {
+						return instance.getEnvironment().createSchema(instance, self.getEnvironment().findSchema(self.resolveURI("#")));
+					} else if (instance.getType() === "array") {
+						return mapArray(instance.getProperties(), function (instance) {
+							return instance.getEnvironment().createSchema(instance, self.getEnvironment().findSchema(self.resolveURI("#")));
+						});
+					}
+				},
+				
+				"validator" : function (instance, schema, self, report, parent, parentSchema) {
+					var extensions = schema.getAttribute('extends'), x, xl;
+					if (extensions) {
+						if (JSV.isJSONSchema(extensions)) {
+							extensions.validate(instance, report, parent, parentSchema);
+						} else if (typeOf(extensions) === 'array') {
+							for (x = 0, xl = extensions.length; x < xl; ++x) {
+								extensions[x].validate(instance, report, parent, parentSchema);
+							}
+						}
+					}
+				}
 			}
 		},
 		
@@ -1328,9 +1346,7 @@ var exports = exports || this,
 			}
 			return schema;
 		}
-	}, null, "http://json-schema.org/schema#");
-	
-	DRAFT_02_SCHEMA._schema = DRAFT_02_SCHEMA;
+	}, true, "http://json-schema.org/schema#");
 	
 	DRAFT_02_HYPERSCHEMA = DRAFT_02_ENVIRONMENT.createSchema({
 		"$schema" : "http://json-schema.org/hyper-schema#",
@@ -1405,6 +1421,7 @@ var exports = exports || this,
 				"optional" : true
 			},
 		
+			//This is here so hyper-schema knows how to extend itself
 			"extends" : {
 				"type" : [{"$ref" : "#"}, "array"],
 				"items" : {"$ref" : "#"},
@@ -1413,10 +1430,10 @@ var exports = exports || this,
 				
 				"parser" : function (instance, self) {
 					if (instance.getType() === "object") {
-						return instance.getEnvironment().createSchema(instance, self.getEnvironment().getSchema(self.resolveURI("#")));
+						return instance.getEnvironment().createSchema(instance, self.getEnvironment().findSchema(self.resolveURI("#")));
 					} else if (instance.getType() === "array") {
 						return mapArray(instance.getProperties(), function (instance) {
-							return instance.getEnvironment().createSchema(instance, self.getEnvironment().getSchema(self.resolveURI("#")));
+							return instance.getEnvironment().createSchema(instance, self.getEnvironment().findSchema(self.resolveURI("#")));
 						});
 					}
 				},
@@ -1455,29 +1472,14 @@ var exports = exports || this,
 		
 		"fragmentResolution" : "dot-delimited",
 		"extends" : {"$ref" : "http://json-schema.org/schema#"},
-				
-		"initializer" : function (schema, self) {
-			//this should probably be under the "extends" attribute,
-			//but for the sake of performance it has been put here
-			var extension = schema.getAttribute('extends'),
-				extended;
-				
-			if (JSV.isJSONSchema(extension)) {
-				//TODO: Remove me
-				console.log("Extending " + schema.getURI()  + " with " + extension.getURI());
-				
-				extended = clone(extension.getValue(), true);
-				mergeSchemas(extended, schema.getValue(), true);
-				
-				return schema.getEnvironment().createSchema(extended, schema.getSchema(), schema.getURI());
-			}
-			return schema;
-		}
+		
+		//This is here so hyper-schema knows how to extend itself
+		"initializer" : DRAFT_02_SCHEMA.getValueOfProperty("initializer")
 	}, null, "http://json-schema.org/hyper-schema#");
 	
 	//Warning: Ugly hack to get hyper-schema to bootstrap
 	DRAFT_02_HYPERSCHEMA._schema = DRAFT_02_HYPERSCHEMA;
-	DRAFT_02_HYPERSCHEMA = DRAFT_02_HYPERSCHEMA.getValueOfProperty("initializer")(DRAFT_02_HYPERSCHEMA, DRAFT_02_HYPERSCHEMA);
+	DRAFT_02_HYPERSCHEMA = DRAFT_02_SCHEMA.getValueOfProperty("initializer")(DRAFT_02_HYPERSCHEMA, DRAFT_02_HYPERSCHEMA);
 	DRAFT_02_HYPERSCHEMA._schema = DRAFT_02_HYPERSCHEMA;
 	DRAFT_02_SCHEMA = DRAFT_02_ENVIRONMENT.createSchema(DRAFT_02_SCHEMA, DRAFT_02_HYPERSCHEMA, "http://json-schema.org/schema#");
 	//DRAFT_02_HYPERSCHEMA = DRAFT_02_ENVIRONMENT.createSchema(DRAFT_02_HYPERSCHEMA, DRAFT_02_HYPERSCHEMA, "http://json-schema.org/hyper-schema#");

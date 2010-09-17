@@ -278,7 +278,7 @@ test("Extends Validation", function () {
 });
 
 test("JSON Schema Validation", function () {
-	var schema = env.getSchema("http://json-schema.org/schema");
+	var schema = env.findSchema("http://json-schema.org/schema");
 	equal(schema.validate(schema).errors.length, 0);
 	
 	//TODO: Test hyper-schema, and others
