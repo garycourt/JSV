@@ -53,7 +53,9 @@ var exports = exports || this,
 		
 		DRAFT_02_ENVIRONMENT,
 		DRAFT_02_TYPE_VALIDATORS,
-		DRAFT_02_SCHEMA;
+		DRAFT_02_SCHEMA,
+		DRAFT_02_HYPERSCHEMA,
+		DRAFT_02_LINKS;
 	
 	//
 	// Utility functions
@@ -155,20 +157,12 @@ var exports = exports || this,
 		}
 	}
 	
+	//Warning: Not a generic clone function
+	//Produces a JSV acceptable clone
 	function clone(obj, deep) {
 		var newObj, x;
 		
 		switch (typeOf(obj)) {
-		case 'undefined':
-			return;
-		case 'null':
-			return null;
-		case 'boolean':
-			return !!obj;
-		case 'number':
-			return +obj;
-		case 'string':
-			return '' + obj;
 		case 'object':
 			if (deep) {
 				newObj = {};
@@ -194,21 +188,8 @@ var exports = exports || this,
 				return Array.pototype.slice.call(obj);
 			}
 			break;
-		case 'function':
-			newObj = function () {
-				return obj.apply(this, arguments);
-			};
-			F.prototype = undefined;
-			for (x in obj) {
-				if (obj[x] !== F[x]) {
-					newObj[x] = clone(obj[x], deep);
-				}
-			}
-			return newObj;
-		case 'regexp':
-			return new RegExp(obj);
-		case 'date':
-			return new Date(obj);
+		default:
+			return obj;
 		}
 	}
 	
@@ -362,7 +343,9 @@ var exports = exports || this,
 	};
 	
 	JSONInstance.prototype.getValueOfProperty = function (key) {
-		return this.getProperty(key).getValue();
+		if (this._value) {
+			return this._value[key];
+		}
 	};
 	
 	JSONInstance.prototype.equals = function (instance) {
@@ -380,7 +363,7 @@ var exports = exports || this,
 	function JSONSchema(env, json, uri, schema) {
 		JSONInstance.call(this, env, json, uri);
 		
-		if (json instanceof JSONSchema) {
+		if (json instanceof JSONSchema && !(schema instanceof JSONSchema)) {
 			this._schema = json._schema;  //TODO: Make sure cross environments don't mess everything up
 		} else {
 			this._schema = schema instanceof JSONSchema ? schema : this._env.getDefaultSchema() || JSONSchema.createEmptySchema();
@@ -513,6 +496,11 @@ var exports = exports || this,
 			schema = instance.getSchema();
 		}
 		
+		//register all URIs that are root
+		if (!instance.getURI().match(/#[\w\d_\-%\(\)]*\./)) {
+			uri = instance.getURI();
+		}
+		
 		if (typeof uri === "string" && uri.length) {
 			this._schemas[uri] = instance;
 			
@@ -610,7 +598,8 @@ var exports = exports || this,
 				env._id = id;
 				ENVIRONMENT[id] = env;
 			}
-		}
+		},
+		ENVIRONMENT : ENVIRONMENT  //TODO: Remove me
 	};
 	
 	this.JSV = JSV;  //set global object
@@ -1294,36 +1283,6 @@ var exports = exports || this,
 				},
 				
 				"typeValidators" : DRAFT_02_TYPE_VALIDATORS
-			},
-		
-			"extends" : {
-				"type" : [{"$ref" : "#"}, "array"],
-				"items" : {"$ref" : "#"},
-				"optional" : true,
-				"default" : {},
-				
-				"parser" : function (instance, self) {
-					if (instance.getType() === "object") {
-						return instance.getEnvironment().createSchema(instance, self.getEnvironment().getSchema(self.resolveURI("#")));
-					} else if (instance.getType() === "array") {
-						return mapArray(instance.getProperties(), function (instance) {
-							return instance.getEnvironment().createSchema(instance, self.getEnvironment().getSchema(self.resolveURI("#")));
-						});
-					}
-				},
-				
-				"validator" : function (instance, schema, self, report, parent, parentSchema) {
-					var extensions = schema.getAttribute('extends'), x, xl;
-					if (extensions) {
-						if (JSV.isJSONSchema(extensions)) {
-							extensions.validate(instance, report, parent, parentSchema);
-						} else if (typeOf(extensions) === 'array') {
-							for (x = 0, xl = extensions.length; x < xl; ++x) {
-								extensions[x].validate(instance, report, parent, parentSchema);
-							}
-						}
-					}
-				}
 			}
 		},
 		
@@ -1356,27 +1315,22 @@ var exports = exports || this,
 			//this should probably be under the "extends" attribute,
 			//but for the sake of performance it has been put here
 			var extension = schema.getAttribute('extends'),
-				extendedURI, extended;
+				extended;
 				
 			if (JSV.isJSONSchema(extension)) {
 				//TODO: Remove me
 				console.log("Extending " + schema.getURI()  + " with " + extension.getURI());
 				
-				extendedURI = schema.getURI() + '(' + escapeURIComponent(extension.getURI()) + ')';
-				
-				extended = schema.getEnvironment().getSchema(extendedURI);
-				if (extended) {
-					return extended;
-				}
-				
 				extended = clone(extension.getValue(), true);
 				mergeSchemas(extended, schema.getValue(), true);
 				
-				return schema.getEnvironment().createSchema(extended, schema.getSchema(), extendedURI);
+				return schema.getEnvironment().createSchema(extended, schema.getSchema(), schema.getURI());
 			}
 			return schema;
 		}
 	}, null, "http://json-schema.org/schema#");
+	
+	DRAFT_02_SCHEMA._schema = DRAFT_02_SCHEMA;
 	
 	DRAFT_02_HYPERSCHEMA = DRAFT_02_ENVIRONMENT.createSchema({
 		"$schema" : "http://json-schema.org/hyper-schema#",
@@ -1449,6 +1403,36 @@ var exports = exports || this,
 				"type" : "array",
 				"items" : {"$ref" : "#"},
 				"optional" : true
+			},
+		
+			"extends" : {
+				"type" : [{"$ref" : "#"}, "array"],
+				"items" : {"$ref" : "#"},
+				"optional" : true,
+				"default" : {},
+				
+				"parser" : function (instance, self) {
+					if (instance.getType() === "object") {
+						return instance.getEnvironment().createSchema(instance, self.getEnvironment().getSchema(self.resolveURI("#")));
+					} else if (instance.getType() === "array") {
+						return mapArray(instance.getProperties(), function (instance) {
+							return instance.getEnvironment().createSchema(instance, self.getEnvironment().getSchema(self.resolveURI("#")));
+						});
+					}
+				},
+				
+				"validator" : function (instance, schema, self, report, parent, parentSchema) {
+					var extensions = schema.getAttribute('extends'), x, xl;
+					if (extensions) {
+						if (JSV.isJSONSchema(extensions)) {
+							extensions.validate(instance, report, parent, parentSchema);
+						} else if (typeOf(extensions) === 'array') {
+							for (x = 0, xl = extensions.length; x < xl; ++x) {
+								extensions[x].validate(instance, report, parent, parentSchema);
+							}
+						}
+					}
+				}
 			}
 		},
 		
@@ -1470,13 +1454,34 @@ var exports = exports || this,
 		],
 		
 		"fragmentResolution" : "dot-delimited",
-		"extends" : {"$ref" : "http://json-schema.org/schema#"}
+		"extends" : {"$ref" : "http://json-schema.org/schema#"},
+				
+		"initializer" : function (schema, self) {
+			//this should probably be under the "extends" attribute,
+			//but for the sake of performance it has been put here
+			var extension = schema.getAttribute('extends'),
+				extended;
+				
+			if (JSV.isJSONSchema(extension)) {
+				//TODO: Remove me
+				console.log("Extending " + schema.getURI()  + " with " + extension.getURI());
+				
+				extended = clone(extension.getValue(), true);
+				mergeSchemas(extended, schema.getValue(), true);
+				
+				return schema.getEnvironment().createSchema(extended, schema.getSchema(), schema.getURI());
+			}
+			return schema;
+		}
 	}, null, "http://json-schema.org/hyper-schema#");
 	
-	//TODO: Remove me after "describedby" support	
-	DRAFT_02_SCHEMA._schema = DRAFT_02_SCHEMA; 
+	//Warning: Ugly hack to get hyper-schema to bootstrap
 	DRAFT_02_HYPERSCHEMA._schema = DRAFT_02_HYPERSCHEMA;
-	
+	DRAFT_02_HYPERSCHEMA = DRAFT_02_HYPERSCHEMA.getValueOfProperty("initializer")(DRAFT_02_HYPERSCHEMA, DRAFT_02_HYPERSCHEMA);
+	DRAFT_02_HYPERSCHEMA._schema = DRAFT_02_HYPERSCHEMA;
+	DRAFT_02_SCHEMA = DRAFT_02_ENVIRONMENT.createSchema(DRAFT_02_SCHEMA, DRAFT_02_HYPERSCHEMA, "http://json-schema.org/schema#");
+	//DRAFT_02_HYPERSCHEMA = DRAFT_02_ENVIRONMENT.createSchema(DRAFT_02_HYPERSCHEMA, DRAFT_02_HYPERSCHEMA, "http://json-schema.org/hyper-schema#");
+		
 	DRAFT_02_LINKS = DRAFT_02_ENVIRONMENT.createSchema({
 		"$schema" : "http://json-schema.org/hyper-schema#",
 		"id" : "http://json-schema.org/links#",
@@ -1513,7 +1518,7 @@ var exports = exports || this,
 		}
 	}, DRAFT_02_HYPERSCHEMA, "http://json-schema.org/links#");
 	
-	DRAFT_02_ENVIRONMENT.setDefaultSchemaURI("http://json-schema.org/schema#");
+	DRAFT_02_ENVIRONMENT.setDefaultSchemaURI("http://json-schema.org/hyper-schema#");
 	JSV.registerEnvironment("json-schema-draft-02", DRAFT_02_ENVIRONMENT);
 	
 	DEFAULT_ENVIRONMENT_ID = "json-schema-draft-02";
