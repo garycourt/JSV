@@ -285,19 +285,21 @@ test("JSON Schema Validation", function () {
 });
 
 test("Links Validation", function () {
+	var schema;
 	//full
 	equal(env.validate({ 'a' : {} }, { 'type' : 'object', 'additionalProperties' : { '$ref' : '#' } }).errors.length, 0);
 	notEqual(env.validate({ 'a' : 1 }, { 'type' : 'object', 'additionalProperties' : { '$ref' : '#' } }).errors.length, 0);
 	
 	//describedby
-	/* "describedby" currently only works for schemas
-	equal(env.validate(
-		{ 'a' : { '$schema' : { 'type' : 'object' } } }, 
-		{ 'type' : 'object', 'additionalProperties' : { 'type' : 'string', 'links' : [{"href" : "{$schema}", "rel" : "describedby"}] } }
-	).errors.length, 0);
-	*/
+	schema = env.createSchema({ "id" : "http://test.example.com/3", "properties" : { "test" : { "type" : "object" } }, "extends" : { "$ref" : "http://json-schema.org/hyper-schema" } }, null, "http://test.example.com/3");
+	schema = env.createSchema({ "$schema" : "http://test.example.com/3", "test" : {} });
+	equal(env.validate({}, { "$schema" : "http://test.example.com/3", "test" : {} }).errors.length, 0);
+	notEqual(env.validate({}, { "$schema" : "http://test.example.com/3", "test" : 0 }).errors.length, 0);
 	
 	//self
+	schema = env.createSchema({ "properties" : { "two" : { "id" : "http://test.example.com/2", "type" : "object" } } }, null, "http://not.example.com/2");
+	equal(env.validate({}, { "$ref" : "http://test.example.com/2" }).errors.length, 0);
+	notEqual(env.validate(null, { "$ref" : "http://test.example.com/2" }).errors.length, 0);
 });
 
 test("Register Schemas", function () {
