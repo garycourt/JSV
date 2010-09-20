@@ -301,7 +301,8 @@ test("Links Validation", function () {
 });
 
 test("Register Schemas", function () {
-	equal(env.registerSchema({'type' : 'string'}, 'http://test.example.com/1').errors.length, 0);
+	var schema = env.createSchema({'type' : 'string'}, null, 'http://test.example.com/1');
+	equal(env.findSchema('http://json-schema.org/hyper-schema').validate(schema).errors.length, 0);
 	equal(env.validate('', { '$ref' : 'http://test.example.com/1' }).errors.length, 0);
 	notEqual(env.validate({}, { '$ref' : 'http://test.example.com/1' }).errors.length, 0);
 });

@@ -44,7 +44,7 @@ var exports = exports || this,
 
 (function () {
 	
-	var URL = require('url'),
+	var URL = require("url"),
 		O = {},
 		mapArray, filterArray,
 		
@@ -63,7 +63,7 @@ var exports = exports || this,
 	//
 	
 	function typeOf(o) {
-		return o === undefined ? 'undefined' : (o === null ? 'null' : Object.prototype.toString.call(o).split(' ').pop().split(']').shift().toLowerCase());
+		return o === undefined ? "undefined" : (o === null ? "null" : Object.prototype.toString.call(o).split(" ").pop().split("]").shift().toLowerCase());
 	}
 	
 	function F() {}
@@ -114,7 +114,7 @@ var exports = exports || this,
 	}
 	
 	function toArray(o) {
-		return o !== undefined && o !== null ? (o instanceof Array && !o.callee ? o : (typeof o.length !== 'number' || o.split || o.setInterval || o.call ? [ o ] : Array.prototype.slice.call(o))) : [];
+		return o !== undefined && o !== null ? (o instanceof Array && !o.callee ? o : (typeof o.length !== "number" || o.split || o.setInterval || o.call ? [ o ] : Array.prototype.slice.call(o))) : [];
 	}
 	
 	function keys(o) {
@@ -150,7 +150,7 @@ var exports = exports || this,
 		var newObj, x;
 		
 		switch (typeOf(obj)) {
-		case 'object':
+		case "object":
 			if (deep) {
 				newObj = {};
 				for (x in obj) {
@@ -163,7 +163,7 @@ var exports = exports || this,
 				return createObject(obj);
 			}
 			break;
-		case 'array':
+		case "array":
 			if (deep) {
 				newObj = new Array(obj.length);
 				x = obj.length;
@@ -181,7 +181,7 @@ var exports = exports || this,
 	}
 	
 	function randomUUID() {
-		var i2h = '0123456789abcdef';
+		var i2h = "0123456789abcdef";
 		return [
 			i2h[Math.floor(Math.random() * 0x10)],
 			i2h[Math.floor(Math.random() * 0x10)],
@@ -191,21 +191,21 @@ var exports = exports || this,
 			i2h[Math.floor(Math.random() * 0x10)],
 			i2h[Math.floor(Math.random() * 0x10)],
 			i2h[Math.floor(Math.random() * 0x10)],
-			'-',
+			"-",
 			i2h[Math.floor(Math.random() * 0x10)],
 			i2h[Math.floor(Math.random() * 0x10)],
 			i2h[Math.floor(Math.random() * 0x10)],
 			i2h[Math.floor(Math.random() * 0x10)],
-			'-4',  //set 4 high bits of time_high field to version
+			"-4",  //set 4 high bits of time_high field to version
 			i2h[Math.floor(Math.random() * 0x10)],
 			i2h[Math.floor(Math.random() * 0x10)],
 			i2h[Math.floor(Math.random() * 0x10)],
-			'-',
+			"-",
 			i2h[(Math.floor(Math.random() * 0x10) & 0x3) | 0x8],  //specify 2 high bits of clock sequence
 			i2h[Math.floor(Math.random() * 0x10)],
 			i2h[Math.floor(Math.random() * 0x10)],
 			i2h[Math.floor(Math.random() * 0x10)],
-			'-',
+			"-",
 			i2h[Math.floor(Math.random() * 0x10)],
 			i2h[Math.floor(Math.random() * 0x10)],
 			i2h[Math.floor(Math.random() * 0x10)],
@@ -218,7 +218,7 @@ var exports = exports || this,
 			i2h[Math.floor(Math.random() * 0x10)],
 			i2h[Math.floor(Math.random() * 0x10)],
 			i2h[Math.floor(Math.random() * 0x10)]
-		].join('');
+		].join("");
 	}
 	
 	function formatURI(uri) {
@@ -317,14 +317,14 @@ var exports = exports || this,
 		var type = typeOf(this._value),
 			self = this;
 		
-		if (type === 'object') {
+		if (type === "object") {
 			return mapObject(this._value, function (value, key) {
 				if (value instanceof JSONInstance) {
 					return value;
 				}
 				return new JSONInstance(self._env, value, self._uri + "." + key);
 			});
-		} else if (type === 'array') {
+		} else if (type === "array") {
 			return mapArray(this._value, function (value, key) {
 				if (value instanceof JSONInstance) {
 					return value;
@@ -491,7 +491,7 @@ var exports = exports || this,
 	};
 	
 	Environment.prototype.setDefaultSchemaURI = function (uri) {
-		if (typeof uri === 'string') {
+		if (typeof uri === "string") {
 			this._defaultSchemaURI = formatURI(uri);
 		}
 	};
@@ -563,10 +563,10 @@ var exports = exports || this,
 		var key;
 		for (key in extra) {
 			if (extra[key] !== O[key]) {
-				if (isSchema && key === 'extends') {
+				if (isSchema && key === "extends") {
 					base[key] = toArray(base[key]).concat(toArray(extra[key]));
-				} else if (typeOf(base[key]) === 'object' && typeOf(extra[key]) === 'object') {
-					mergeSchemas(base[key], extra[key], !isSchema || key !== 'properties');  //FIXME: An attribute other then "properties" may be a plain object
+				} else if (typeOf(base[key]) === "object" && typeOf(extra[key]) === "object") {
+					mergeSchemas(base[key], extra[key], !isSchema || key !== "properties");  //FIXME: An attribute other then "properties" may be a plain object
 				} else {
 					base[key] = extra[key];
 				}
@@ -650,7 +650,7 @@ var exports = exports || this,
 						x, xl, type, subreport, typeValidators;
 					
 					//for instances that are required to be a certain type
-					if (instance.getType() !== 'undefined' && requiredTypes && requiredTypes.length) {
+					if (instance.getType() !== "undefined" && requiredTypes && requiredTypes.length) {
 						typeValidators = self.getValueOfProperty("typeValidators") || {};
 						
 						//ensure that type matches for at least one of the required types
@@ -663,7 +663,7 @@ var exports = exports || this,
 									return true;  //instance matches this schema
 								}
 							} else {
-								if (typeValidators[type] !== O[type] && typeof typeValidators[type] === 'function') {
+								if (typeValidators[type] !== O[type] && typeof typeValidators[type] === "function") {
 									if (typeValidators[type](instance, report)) {
 										return true;  //type is valid
 									}
@@ -674,7 +674,7 @@ var exports = exports || this,
 						}
 						
 						//if we get to this point, type is invalid
-						report.addError(instance, schema, 'type', 'Instance is not a required type', requiredTypes);
+						report.addError(instance, schema, "type", "Instance is not a required type", requiredTypes);
 						return false;
 					}
 					//else, anything is allowed if no type is specified
@@ -743,18 +743,18 @@ var exports = exports || this,
 				"validator" : function (instance, schema, self, report, parent, parentSchema) {
 					var properties, items, x, xl, itemSchema, additionalProperties;
 					
-					if (instance.getType() === 'array') {
+					if (instance.getType() === "array") {
 						properties = instance.getProperties();
 						items = schema.getAttribute("items");
 						additionalProperties = schema.getAttribute("additionalProperties");
 						
-						if (typeOf(items) === 'array') {
+						if (typeOf(items) === "array") {
 							for (x = 0, xl = properties.length; x < xl; ++x) {
 								itemSchema = items[x] || additionalProperties;
 								if (itemSchema !== false) {
 									itemSchema.validate(properties[x], report, instance, schema);
 								} else {
-									report.addError(instance, schema, 'additionalProperties', 'Additional items are not allowed', itemSchema);
+									report.addError(instance, schema, "additionalProperties", "Additional items are not allowed", itemSchema);
 								}
 							}
 						} else {
@@ -777,8 +777,8 @@ var exports = exports || this,
 				},
 				
 				"validator" : function (instance, schema, self, report, parent, parentSchema) {
-					if (instance.getType() === 'undefined' && !schema.getAttribute("optional")) {
-						report.addError(instance, schema, 'optional', "Property is required", false);
+					if (instance.getType() === "undefined" && !schema.getAttribute("optional")) {
+						report.addError(instance, schema, "optional", "Property is required", false);
 					}
 				},
 				
@@ -803,7 +803,7 @@ var exports = exports || this,
 				"validator" : function (instance, schema, self, report, parent, parentSchema) {
 					var additionalProperties, propertySchemas, properties, key;
 					//we only need to check against object types as arrays do their own checking on this property
-					if (instance.getType() === 'object') {
+					if (instance.getType() === "object") {
 						additionalProperties = schema.getAttribute("additionalProperties");
 						propertySchemas = schema.getAttribute("properties") || {};
 						properties = instance.getProperties();
@@ -812,7 +812,7 @@ var exports = exports || this,
 								if (JSV.isJSONSchema(additionalProperties)) {
 									additionalProperties.validate(properties[key], report, instance, schema);
 								} else if (additionalProperties === false) {
-									report.addError(instance, schema, 'additionalProperties', 'Additional properties are not allowed', additionalProperties);
+									report.addError(instance, schema, "additionalProperties", "Additional properties are not allowed", additionalProperties);
 								}
 							}
 						}
@@ -834,11 +834,11 @@ var exports = exports || this,
 				
 				"validator" : function (instance, schema, self, report, parent, parentSchema) {
 					var requires;
-					if (instance.getType() !== 'undefined' && parent && parent.getType() !== 'undefined') {
+					if (instance.getType() !== "undefined" && parent && parent.getType() !== "undefined") {
 						requires = schema.getAttribute("requires");
-						if (typeof requires === 'string') {
+						if (typeof requires === "string") {
 							if (parent.getProperty(requires).getType() === "undefined") {
-								report.addError(instance, schema, 'requires', 'Property requires sibling property "' + requires + '"', requires);
+								report.addError(instance, schema, "requires", 'Property requires sibling property "' + requires + '"', requires);
 							}
 						} else if (JSV.isJSONSchema(requires)) {
 							requires.validate(parent, report);  //WATCH: A "requires" schema does not support the "requires" attribute
@@ -859,11 +859,11 @@ var exports = exports || this,
 				
 				"validator" : function (instance, schema, self, report, parent, parentSchema) {
 					var minimum, minimumCanEqual;
-					if (instance.getType() === 'number') {
+					if (instance.getType() === "number") {
 						minimum = schema.getAttribute("minimum");
 						minimumCanEqual = schema.getAttribute("minimumCanEqual");
 						if (instance.getValue() < minimum || (minimumCanEqual === false && instance.getValue() === minimum)) {
-							report.addError(instance, schema, 'minimum', 'Number is less then the required minimum value', minimum);
+							report.addError(instance, schema, "minimum", "Number is less then the required minimum value", minimum);
 						}
 					}
 				}
@@ -881,11 +881,11 @@ var exports = exports || this,
 				
 				"validator" : function (instance, schema, self, report, parent, parentSchema) {
 					var maximum, maximumCanEqual;
-					if (instance.getType() === 'number') {
+					if (instance.getType() === "number") {
 						maximum = schema.getAttribute("maximum");
 						maximumCanEqual = schema.getAttribute("maximumCanEqual");
 						if (instance.getValue() > maximum || (maximumCanEqual === false && instance.getValue() === maximum)) {
-							report.addError(instance, schema, 'maximum', 'Number is greater then the required maximum value', maximum);
+							report.addError(instance, schema, "maximum", "Number is greater then the required maximum value", maximum);
 						}
 					}
 				}
@@ -937,10 +937,10 @@ var exports = exports || this,
 				
 				"validator" : function (instance, schema, self, report, parent, parentSchema) {
 					var minItems;
-					if (instance.getType() === 'array') {
+					if (instance.getType() === "array") {
 						minItems = schema.getAttribute("minItems");
 						if (instance.getProperties().length < minItems) {
-							report.addError(instance, schema, 'minItems', 'The number of items is less then the required minimum', minItems);
+							report.addError(instance, schema, "minItems", "The number of items is less then the required minimum", minItems);
 						}
 					}
 				}
@@ -959,10 +959,10 @@ var exports = exports || this,
 				
 				"validator" : function (instance, schema, self, report, parent, parentSchema) {
 					var maxItems;
-					if (instance.getType() === 'array') {
+					if (instance.getType() === "array") {
 						maxItems = schema.getAttribute("maxItems");
 						if (instance.getProperties().length > maxItems) {
-							report.addError(instance, schema, 'maxItems', 'The number of items is greater then the required maximum', maxItems);
+							report.addError(instance, schema, "maxItems", "The number of items is greater then the required maximum", maxItems);
 						}
 					}
 				}
@@ -979,12 +979,12 @@ var exports = exports || this,
 				
 				"validator" : function (instance, schema, self, report, parent, parentSchema) {
 					var value, x, xl, y, yl;
-					if (instance.getType() === 'array' && schema.getAttribute("uniqueItems")) {
+					if (instance.getType() === "array" && schema.getAttribute("uniqueItems")) {
 						value = instance.getProperties();
 						for (x = 0, xl = value.length - 1; x < xl; ++x) {
 							for (y = x + 1, yl = value.length; y < yl; ++y) {
 								if (value[x].equals(value[y])) {
-									report.addError(instance, schema, 'uniqueItems', 'Array can only contain unique items', { x : x, y : y });
+									report.addError(instance, schema, "uniqueItems", "Array can only contain unique items", { x : x, y : y });
 								}
 							}
 						}
@@ -1012,12 +1012,12 @@ var exports = exports || this,
 					try {
 						pattern = schema.getAttribute("pattern");
 						if (pattern instanceof Error) {
-							report.addError(instance, schema, 'pattern', 'Invalid pattern', pattern);
-						} else if (instance.getType() === 'string' && pattern && !pattern.test(instance.getValue())) {
-							report.addError(instance, schema, 'pattern', 'String does not match pattern', pattern.toString());
+							report.addError(instance, schema, "pattern", "Invalid pattern", pattern);
+						} else if (instance.getType() === "string" && pattern && !pattern.test(instance.getValue())) {
+							report.addError(instance, schema, "pattern", "String does not match pattern", pattern.toString());
 						}
 					} catch (e) {
-						report.addError(instance, schema, 'pattern', 'Invalid pattern', e);
+						report.addError(instance, schema, "pattern", "Invalid pattern", e);
 					}
 				}
 			},
@@ -1038,10 +1038,10 @@ var exports = exports || this,
 				
 				"validator" : function (instance, schema, self, report, parent, parentSchema) {
 					var minLength;
-					if (instance.getType() === 'string') {
+					if (instance.getType() === "string") {
 						minLength = schema.getAttribute("minLength");
 						if (instance.getValue().length < minLength) {
-							report.addError(instance, schema, 'minLength', 'String is less then the required minimum length', minLength);
+							report.addError(instance, schema, "minLength", "String is less then the required minimum length", minLength);
 						}
 					}
 				}
@@ -1059,10 +1059,10 @@ var exports = exports || this,
 				
 				"validator" : function (instance, schema, self, report, parent, parentSchema) {
 					var maxLength;
-					if (instance.getType() === 'string') {
+					if (instance.getType() === "string") {
 						maxLength = schema.getAttribute("maxLength");
 						if (instance.getValue().length > maxLength) {
-							report.addError(instance, schema, 'maxLength', 'String is greater then the required maximum length', maxLength);
+							report.addError(instance, schema, "maxLength", "String is greater then the required maximum length", maxLength);
 						}
 					}
 				}
@@ -1088,7 +1088,7 @@ var exports = exports || this,
 								return true;
 							}
 						}
-						report.addError(instance, schema, 'enum', 'Instance is not one of the possible values', enums);
+						report.addError(instance, schema, "enum", "Instance is not one of the possible values", enums);
 					}
 				}
 			},
@@ -1127,11 +1127,11 @@ var exports = exports || this,
 				
 				"validator" : function (instance, schema, self, report, parent, parentSchema) {
 					var format, formatValidators;
-					if (instance.getType() === 'string') {
+					if (instance.getType() === "string") {
 						format = schema.getAttribute("format");
 						formatValidators = self.getValueOfProperty("formatValidators");
-						if (formatValidators[format] !== O[format] && typeof formatValidators[format] === 'function' && !formatValidators[format].call(this, instance, report)) {
-							report.addError(instance, schema, 'format', 'String is not in the required format', format);
+						if (formatValidators[format] !== O[format] && typeof formatValidators[format] === "function" && !formatValidators[format].call(this, instance, report)) {
+							report.addError(instance, schema, "format", "String is not in the required format", format);
 						}
 					}
 				},
@@ -1176,12 +1176,12 @@ var exports = exports || this,
 				
 				"validator" : function (instance, schema, self, report, parent, parentSchema) {
 					var divisor;
-					if (instance.getType() === 'number') {
+					if (instance.getType() === "number") {
 						divisor = schema.getAttribute("divisibleBy");
 						if (divisor === 0) {
-							report.addError(instance, schema, 'divisibleBy', 'Nothing is divisible by 0', divisor);
+							report.addError(instance, schema, "divisibleBy", "Nothing is divisible by 0", divisor);
 						} else if (divisor !== 1 && ((instance.getValue() / divisor) % 1) !== 0) {
-							report.addError(instance, schema, 'divisibleBy', 'Number is not divisible by ' + divisor, divisor);
+							report.addError(instance, schema, "divisibleBy", "Number is not divisible by " + divisor, divisor);
 						}
 					}
 				}
@@ -1204,21 +1204,21 @@ var exports = exports || this,
 						x, xl, key, typeValidators;
 					
 					//for instances that are required to be a certain type
-					if (instance.getType() !== 'undefined' && disallowedTypes && disallowedTypes.length) {
+					if (instance.getType() !== "undefined" && disallowedTypes && disallowedTypes.length) {
 						typeValidators = self.getValueOfProperty("typeValidators") || {};
 						
 						//ensure that type matches for at least one of the required types
 						for (x = 0, xl = disallowedTypes.length; x < xl; ++x) {
 							key = disallowedTypes[x];
-							if (typeValidators[key] !== O[key] && typeof typeValidators[key] === 'function') {
+							if (typeValidators[key] !== O[key] && typeof typeValidators[key] === "function") {
 								if (typeValidators[key](instance, report)) {
-									report.addError(instance, schema, 'disallow', 'Instance is a disallowed type', disallowedTypes);
+									report.addError(instance, schema, "disallow", "Instance is a disallowed type", disallowedTypes);
 									return false;
 								}
 							} 
 							/*
 							else {
-								report.addError(instance, schema, 'disallow', 'Instance may be a disallowed type', disallowedTypes);
+								report.addError(instance, schema, "disallow", "Instance may be a disallowed type", disallowedTypes);
 								return false;
 							}
 							*/
@@ -1251,11 +1251,11 @@ var exports = exports || this,
 				},
 				
 				"validator" : function (instance, schema, self, report, parent, parentSchema) {
-					var extensions = schema.getAttribute('extends'), x, xl;
+					var extensions = schema.getAttribute("extends"), x, xl;
 					if (extensions) {
 						if (JSV.isJSONSchema(extensions)) {
 							extensions.validate(instance, report, parent, parentSchema);
-						} else if (typeOf(extensions) === 'array') {
+						} else if (typeOf(extensions) === "array") {
 							for (x = 0, xl = extensions.length; x < xl; ++x) {
 								extensions[x].validate(instance, report, parent, parentSchema);
 							}
@@ -1313,7 +1313,7 @@ var exports = exports || this,
 				//if there is a link to the full representation, replace instance
 				link = instance._schema.getLink("full", instance);
 				if (link && instance._uri !== link && instance._env._schemas[link]) {
-					console.log("Replacing " + instance._uri + " with " + link); //TODO: Remove me
+					//console.log("Replacing " + instance._uri + " with " + link);
 					instance = instance._env._schemas[link];
 					return instance;  //retrieved schemas are guaranteed to be initialized
 				}
@@ -1321,16 +1321,15 @@ var exports = exports || this,
 				//if there is a link to a different schema, update instance
 				link = instance._schema.getLink("describedby", instance);
 				if (link && instance._schema._uri !== link && instance._env._schemas[link]) {
-					console.log("Updating schema " + instance._schema._uri + " with " + link); //TODO: Remove me
+					//console.log("Updating schema " + instance._schema._uri + " with " + link);
 					instance._schema = instance._env._schemas[link];
 					continue;  //start over
 				}
 				
 				//extend schema
-				extension = instance.getAttribute('extends');
+				extension = instance.getAttribute("extends");
 				if (JSV.isJSONSchema(extension)) {
-					//TODO: Remove me
-					console.log("Extending " + instance._uri  + " with " + extension._uri);
+					//console.log("Extending " + instance._uri  + " with " + extension._uri);
 					
 					extended = clone(extension._value, true);
 					mergeSchemas(extended, instance._value, true);
@@ -1374,10 +1373,10 @@ var exports = exports || this,
 					if (arg[1]) {
 						links = mapArray(links, function (link) {
 							var instance = arg[1],
-								href = link['href'];
+								href = link["href"];
 							href = href.replace(/\{(.+)\}/g, function (str, p1, offset, s) {
 								var value = instance.getValueOfProperty(p1);
-								return value !== undefined ? String(value) : '';
+								return value !== undefined ? String(value) : "";
 							});
 							return href ? formatURI(instance.resolveURI(href)) : href;
 						});
