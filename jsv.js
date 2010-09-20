@@ -322,7 +322,12 @@ var exports = exports || this,
 	};
 	
 	JSONInstance.prototype.getProperty = function (key) {
-		return new JSONInstance(this._env, (this._value ? this._value[key] : undefined), this._uri + "." + key);
+		var value = this._value ? this._value[key] : undefined;
+		if (value instanceof JSONInstance) {
+			return value;
+		}
+		//else
+		return new JSONInstance(this._env, value, this._uri + "." + key);
 	};
 	
 	JSONInstance.prototype.getProperties = function () {
@@ -331,10 +336,16 @@ var exports = exports || this,
 		
 		if (type === 'object') {
 			return mapObject(this._value, function (value, key) {
+				if (value instanceof JSONInstance) {
+					return value;
+				}
 				return new JSONInstance(self._env, value, self._uri + "." + key);
 			});
 		} else if (type === 'array') {
 			return mapArray(this._value, function (value, key) {
+				if (value instanceof JSONInstance) {
+					return value;
+				}
 				return new JSONInstance(self._env, value, self._uri + "." + key);
 			});
 		}
@@ -342,6 +353,9 @@ var exports = exports || this,
 	
 	JSONInstance.prototype.getValueOfProperty = function (key) {
 		if (this._value) {
+			if (this._value[key] instanceof JSONInstance) {
+				return this._value[key]._value;
+			}
 			return this._value[key];
 		}
 	};
@@ -368,18 +382,6 @@ var exports = exports || this,
 		} else {
 			this._schema = schema instanceof JSONSchema ? schema : this._env.getDefaultSchema() || JSONSchema.createEmptySchema();
 		}
-		
-		//check for "describedby" links
-		//if found, and different then the current schema, and has been registered,
-		//  replace it with registered schema. Repeat.
-		var link = this.getLink("describedby", this);
-		while (link && this._schema.getURI() !== link && this._env.findSchema(link)) {
-			//TODO: Remove me
-			console.log("Upgrading " + this._schema.getURI() + " to " + link);
-			
-			this._schema = this._env.findSchema(link);
-			link = this.getLink("describedby", this);
-		}
 	}
 	
 	JSONSchema.prototype = createObject(JSONInstance.prototype);
@@ -396,6 +398,10 @@ var exports = exports || this,
 	};
 	
 	JSONSchema.prototype.getAttribute = function (key, arg) {
+		if (this._attributes && !arg) {
+			return this._attributes[key];
+		}
+		
 		var schemaProperty = this._schema.getProperty("properties").getProperty(key),
 			parser = schemaProperty.getValueOfProperty("parser"),
 			property = this.getProperty(key);
@@ -407,7 +413,7 @@ var exports = exports || this,
 	};
 	
 	JSONSchema.prototype.getLink = function (href, instance) {
-		var schemaLinks = this._schema.getAttribute("links", [href, instance]);
+		var schemaLinks = this.getAttribute("links", [href, instance]);
 		if (schemaLinks && schemaLinks.length && schemaLinks[schemaLinks.length - 1]) {
 			return schemaLinks[schemaLinks.length - 1];
 		}
@@ -465,57 +471,31 @@ var exports = exports || this,
 	};
 	
 	Environment.prototype.createSchema = function (data, schema, uri) {
-		var instance, link, initializer;
+		var instance, 
+			link,
+			initializer,
+			parser;
 		uri = formatURI(uri);
 		
-		if (data instanceof JSONSchema && (!uri || data.getURI() === uri) && (!schema || data.getSchema().equals(schema))) {
+		if (data instanceof JSONSchema && (!uri || data._uri === uri) && (!schema || data._schema.equals(schema))) {
 			return data;
 		}
-		//else
+		
 		instance = new JSONSchema(this, data, uri, schema);
-		schema = instance.getSchema();
 		
-		//allow schema initializers to post-process
-		initializer = schema.getValueOfProperty("initializer");
+		initializer = instance.getSchema().getValueOfProperty("initializer");
 		if (typeof initializer === "function") {
-			instance = initializer(instance, schema);
-			schema = instance.getSchema();
+			instance = initializer(instance);
 		}
 		
-		//register all URIs that are root
-		if (!instance.getURI().match(/#[\w\d_\-%\(\)]*\./)) {
-			uri = instance.getURI();
-		}
+		//register schema
+		this._schemas[instance._uri] = instance;
 		
-		if (typeof uri === "string" && uri.length) {
-			this._schemas[uri] = instance;
-			
-			//check if schema has a "self" link
-			//if found, change URI and register schema to URI
-			link = instance.getLink("self", instance);
-			if (link && instance.getURI() !== link) {
-				//TODO: Remove me
-				console.log("Mapping " + instance.getURI() + " to " + link);
-				
-				instance = this.createSchema(instance, schema, link);
-				this._schemas[instance.getURI()] = instance;
-			}
-			
-			//find and register all sub-"self" links
-			//TODO
-		}
-		
-		//check if schema has a full link
-		//if found, replace with full schema
-		link = instance.getLink("full", instance);
-		if (link && this._schemas[link]) {
-			instance = this._schemas[link];
-			schema = instance.getSchema();
-		}
-		
-		//if schema's schema is itself, make sure it's pointing at the latest copy
-		if (instance.getURI() === instance.getSchema().getURI()) {
-			instance._schema = instance;
+		//build the rest of the schema
+		parser = instance._schema.getValueOfProperty("parser");
+		if (!instance._attributes && typeof parser === "function") {
+			instance._attributes = {};
+			instance._attributes = parser(instance, instance._schema);
 		}
 		
 		return instance;
@@ -844,7 +824,7 @@ var exports = exports || this,
 					//we only need to check against object types as arrays do their own checking on this property
 					if (instance.getType() === 'object') {
 						additionalProperties = schema.getAttribute("additionalProperties");
-						propertySchemas = schema.getAttribute("properties");
+						propertySchemas = schema.getAttribute("properties") || {};
 						properties = instance.getProperties();
 						for (key in properties) {
 							if (properties[key] !== O[key] && properties[key] && !propertySchemas[key]) {
@@ -901,7 +881,7 @@ var exports = exports || this,
 					if (instance.getType() === 'number') {
 						minimum = schema.getAttribute("minimum");
 						minimumCanEqual = schema.getAttribute("minimumCanEqual");
-						if (instance.getValue() < minimum || (!minimumCanEqual && instance.getValue() === minimum)) {
+						if (instance.getValue() < minimum || (minimumCanEqual === false && instance.getValue() === minimum)) {
 							report.addError(instance, schema, 'minimum', 'Number is less then the required minimum value', minimum);
 						}
 					}
@@ -923,7 +903,7 @@ var exports = exports || this,
 					if (instance.getType() === 'number') {
 						maximum = schema.getAttribute("maximum");
 						maximumCanEqual = schema.getAttribute("maximumCanEqual");
-						if (instance.getValue() > maximum || (!maximumCanEqual && instance.getValue() === maximum)) {
+						if (instance.getValue() > maximum || (maximumCanEqual === false && instance.getValue() === maximum)) {
 							report.addError(instance, schema, 'maximum', 'Number is greater then the required maximum value', maximum);
 						}
 					}
@@ -1307,6 +1287,22 @@ var exports = exports || this,
 		"optional" : true,
 		"default" : {},
 		
+		"parser" : function (instance, self) {
+			var selfProperties = self.getProperty("properties");
+			if (instance.getType() === "object") {
+				return mapObject(instance.getProperties(), function (property, key) {
+					var schemaProperty = selfProperties.getProperty(key),
+						parser = schemaProperty && schemaProperty.getValueOfProperty("parser");
+					if (typeof parser === "function") {
+						return parser(property, schemaProperty);
+					}
+					//else
+					return property;
+				});
+			}
+			return instance;
+		},
+		
 		"validator" : function (instance, schema, self, report, parent, parentSchema) {
 			var propNames = schema.getPropertyNames(), 
 				x, xl,
@@ -1329,22 +1325,48 @@ var exports = exports || this,
 			}
 		},
 				
-		"initializer" : function (schema, self) {
-			//this should probably be under the "extends" attribute,
-			//but for the sake of performance it has been put here
-			var extension = schema.getAttribute('extends'),
-				extended;
+		"initializer" : function (instance) {
+			var instance, extension, extended;
+			
+			do {
+				//if there is a link to the full representation, replace instance
+				link = instance._schema.getLink("full", instance);
+				if (link && instance._uri !== link && instance._env._schemas[link]) {
+					console.log("Replacing " + instance._uri + " with " + link); //TODO: Remove me
+					instance = instance._env._schemas[link];
+					return instance;  //retrieved schemas are guaranteed to be initialized
+				}
 				
-			if (JSV.isJSONSchema(extension)) {
-				//TODO: Remove me
-				console.log("Extending " + schema.getURI()  + " with " + extension.getURI());
+				//if there is a link to a different schema, update instance
+				link = instance._schema.getLink("describedby", instance);
+				if (link && instance._schema._uri !== link && instance._env._schemas[link]) {
+					console.log("Updating schema " + instance._schema._uri + " with " + link); //TODO: Remove me
+					instance._schema = instance._env._schemas[link];
+					continue;  //start over
+				}
 				
-				extended = clone(extension.getValue(), true);
-				mergeSchemas(extended, schema.getValue(), true);
+				//extend schema
+				extension = instance.getAttribute('extends');
+				if (JSV.isJSONSchema(extension)) {
+					//TODO: Remove me
+					console.log("Extending " + instance._uri  + " with " + extension._uri);
+					
+					extended = clone(extension._value, true);
+					mergeSchemas(extended, instance._value, true);
+					
+					instance = instance._env.createSchema(extended, instance._schema, instance._uri);
+				}
 				
-				return schema.getEnvironment().createSchema(extended, schema.getSchema(), schema.getURI());
+				break;  //get out of the loop
+			} while (true);
+	
+			//if instance has a URI link to itself, update it's own URI
+			link = instance._schema.getLink("self", instance);
+			if (link) {
+				instance._uri = link;
 			}
-			return schema;
+			
+			return instance;
 		}
 	}, true, "http://json-schema.org/schema#");
 	
@@ -1474,6 +1496,8 @@ var exports = exports || this,
 		"extends" : {"$ref" : "http://json-schema.org/schema#"},
 		
 		//This is here so hyper-schema knows how to extend itself
+		//"parser" : DRAFT_02_SCHEMA.getValueOfProperty("parser"),
+		//"validator" : DRAFT_02_SCHEMA.getValueOfProperty("validator"),
 		"initializer" : DRAFT_02_SCHEMA.getValueOfProperty("initializer")
 	}, null, "http://json-schema.org/hyper-schema#");
 	
