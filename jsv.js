@@ -3,7 +3,7 @@
  * 
  * @fileOverview A JavaScript implementation of a extendable, fully compliant revision 2 JSON Schema validator.
  * @author <a href="mailto:gary.court@gmail.com">Gary Court</a>
- * @version 2.0
+ * @version 3.0beta
  * @see http://github.com/garycourt/JSV
  */
 
@@ -35,7 +35,7 @@
  * or implied, of Gary Court or the JSON Schema specification.
  */
 
-/*jslint white: true, onevar: true, undef: true, eqeqeq: true, newcap: true, immed: true */
+/*jslint white: true, sub: true, onevar: true, undef: true, eqeqeq: true, newcap: true, immed: true, indent: 4 */
 
 var exports = exports || this,
 	require = require || function () {
@@ -46,6 +46,7 @@ var exports = exports || this,
 	
 	var URL = require('url'),
 		O = {},
+		mapArray, filterArray,
 		
 		ENVIRONMENT = {},
 		DEFAULT_ENVIRONMENT_ID,
@@ -72,20 +73,6 @@ var exports = exports || this,
 		return new F();
 	}
 	
-	function cloneArray(o) {
-		return Array.prototype.slice.call(o);
-	}
-	
-	function mixin(obj, props) {
-		var key;
-		for (key in props) {
-			if (props[key] !== O[key]) {
-				obj[key] = props[key];
-			}
-		}
-		return obj;
-	}
-	
 	function mapObject(obj, func, scope) {
 		var newObj = {}, key;
 		for (key in obj) {
@@ -96,13 +83,13 @@ var exports = exports || this,
 		return newObj;
 	}
 	
-	function mapArray(arr, func, scope) {
+	mapArray = function (arr, func, scope) {
 		var x = 0, xl = arr.length, newArr = new Array(xl);
 		for (; x < xl; ++x) {
 			newArr[x] = func.call(scope, arr[x], x, arr);
 		}
 		return newArr;
-	}
+	};
 		
 	if (Array.prototype.map) {
 		mapArray = function (arr, func, scope) {
@@ -110,7 +97,7 @@ var exports = exports || this,
 		};
 	}
 	
-	function filterArray(arr, func, scope) {
+	filterArray = function (arr, func, scope) {
 		var x = 0, xl = arr.length, newArr = [];
 		for (; x < xl; ++x) {
 			if (func.call(scope, arr[x], x, arr)) {
@@ -118,7 +105,7 @@ var exports = exports || this,
 			}
 		}
 		return newArr;
-	}
+	};
 	
 	if (Array.prototype.filter) {
 		filterArray = function (arr, func, scope) {
@@ -173,7 +160,7 @@ var exports = exports || this,
 				}
 				return newObj;
 			} else {
-				return delegateObject(obj);
+				return createObject(obj);
 			}
 			break;
 		case 'array':
@@ -232,10 +219,6 @@ var exports = exports || this,
 			i2h[Math.floor(Math.random() * 0x10)],
 			i2h[Math.floor(Math.random() * 0x10)]
 		].join('');
-	}
-	
-	function escapeURIComponent(str) {
-		return encodeURIComponent(str).replace(/!/g, '%21').replace(/'/g, '%27').replace(/\(/g, '%28').replace(/\)/g, '%29').replace(/\*/g, '%2A');
 	}
 	
 	function formatURI(uri) {
@@ -314,7 +297,7 @@ var exports = exports || this,
 	};
 	
 	JSONInstance.prototype.resolveURI = function (uri) {
-		return uri = formatURI(URL.resolve(this._uri, uri));
+		return formatURI(URL.resolve(this._uri, uri));
 	};
 	
 	JSONInstance.prototype.getPropertyNames = function () {
@@ -443,7 +426,6 @@ var exports = exports || this,
 	//
 	
 	function Environment() {
-		var self = this;
 		this._id = randomUUID();
 		this._schemas = {};
 		this._defaultSchemaURI = "";
@@ -472,7 +454,6 @@ var exports = exports || this,
 	
 	Environment.prototype.createSchema = function (data, schema, uri) {
 		var instance, 
-			link,
 			initializer,
 			parser;
 		uri = formatURI(uri);
@@ -645,7 +626,7 @@ var exports = exports || this,
 				"default" : "any",
 				
 				"parser" : function (instance, self) {
-					var parser = arguments.callee;
+					var parser;
 					
 					if (instance.getType() === "string") {
 						return instance.getValue();
@@ -655,6 +636,7 @@ var exports = exports || this,
 							self.getEnvironment().findSchema(self.resolveURI("#"))
 						);
 					} else if (instance.getType() === "array") {
+						parser = self.getValueOfProperty("parser");
 						return mapArray(instance.getProperties(), function (prop) {
 							return parser(prop, self);
 						});
@@ -710,8 +692,7 @@ var exports = exports || this,
 				
 				"parser" : function (instance, self, arg) {
 					var env = instance.getEnvironment(),
-						selfEnv = self.getEnvironment(),
-						uri = instance.getURI();
+						selfEnv = self.getEnvironment();
 					if (instance.getType() === "object") {
 						if (arg) {
 							return env.createSchema(instance.getProperty(arg), selfEnv.findSchema(self.resolveURI("#")));
@@ -734,7 +715,7 @@ var exports = exports || this,
 						for (key in propertySchemas) {
 							if (propertySchemas[key] !== O[key] && propertySchemas[key]) {
 								//ensure that instance property is valid
-								propertySchemas[key].validate(instance.getProperty(key), report, instance, schema)
+								propertySchemas[key].validate(instance.getProperty(key), report, instance, schema);
 							}
 						}
 					}
@@ -1326,7 +1307,7 @@ var exports = exports || this,
 		},
 				
 		"initializer" : function (instance) {
-			var instance, extension, extended;
+			var link, extension, extended;
 			
 			do {
 				//if there is a link to the full representation, replace instance
@@ -1381,7 +1362,7 @@ var exports = exports || this,
 				"optional" : true,
 				
 				"parser" : function (instance, self, arg) {
-					var links = toArray(instance.getValue()), x, xl;
+					var links = toArray(instance.getValue());
 					arg = toArray(arg);
 					
 					if (arg[0]) {
@@ -1393,8 +1374,7 @@ var exports = exports || this,
 					if (arg[1]) {
 						links = mapArray(links, function (link) {
 							var instance = arg[1],
-								href = link['href'],
-								uri;
+								href = link['href'];
 							href = href.replace(/\{(.+)\}/g, function (str, p1, offset, s) {
 								var value = instance.getValueOfProperty(p1);
 								return value !== undefined ? String(value) : '';
@@ -1444,35 +1424,7 @@ var exports = exports || this,
 			},
 		
 			//This is here so hyper-schema knows how to extend itself
-			"extends" : {
-				"type" : [{"$ref" : "#"}, "array"],
-				"items" : {"$ref" : "#"},
-				"optional" : true,
-				"default" : {},
-				
-				"parser" : function (instance, self) {
-					if (instance.getType() === "object") {
-						return instance.getEnvironment().createSchema(instance, self.getEnvironment().findSchema(self.resolveURI("#")));
-					} else if (instance.getType() === "array") {
-						return mapArray(instance.getProperties(), function (instance) {
-							return instance.getEnvironment().createSchema(instance, self.getEnvironment().findSchema(self.resolveURI("#")));
-						});
-					}
-				},
-				
-				"validator" : function (instance, schema, self, report, parent, parentSchema) {
-					var extensions = schema.getAttribute('extends'), x, xl;
-					if (extensions) {
-						if (JSV.isJSONSchema(extensions)) {
-							extensions.validate(instance, report, parent, parentSchema);
-						} else if (typeOf(extensions) === 'array') {
-							for (x = 0, xl = extensions.length; x < xl; ++x) {
-								extensions[x].validate(instance, report, parent, parentSchema);
-							}
-						}
-					}
-				}
-			}
+			"extends" : DRAFT_02_SCHEMA.getProperty("properties").getValueOfProperty("extends")
 		},
 		
 		"links" : [
@@ -1506,7 +1458,6 @@ var exports = exports || this,
 	DRAFT_02_HYPERSCHEMA = DRAFT_02_SCHEMA.getValueOfProperty("initializer")(DRAFT_02_HYPERSCHEMA, DRAFT_02_HYPERSCHEMA);
 	DRAFT_02_HYPERSCHEMA._schema = DRAFT_02_HYPERSCHEMA;
 	DRAFT_02_SCHEMA = DRAFT_02_ENVIRONMENT.createSchema(DRAFT_02_SCHEMA, DRAFT_02_HYPERSCHEMA, "http://json-schema.org/schema#");
-	//DRAFT_02_HYPERSCHEMA = DRAFT_02_ENVIRONMENT.createSchema(DRAFT_02_HYPERSCHEMA, DRAFT_02_HYPERSCHEMA, "http://json-schema.org/hyper-schema#");
 		
 	DRAFT_02_LINKS = DRAFT_02_ENVIRONMENT.createSchema({
 		"$schema" : "http://json-schema.org/hyper-schema#",
