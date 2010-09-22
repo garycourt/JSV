@@ -221,6 +221,10 @@ var exports = exports || this,
 		].join("");
 	}
 	
+	function escapeURIComponent(str) {
+		return encodeURIComponent(str).replace(/!/g, '%21').replace(/'/g, '%27').replace(/\(/g, '%28').replace(/\)/g, '%29').replace(/\*/g, '%2A');
+	}
+	
 	function formatURI(uri) {
 		if (typeof uri === "string" && uri.indexOf("#") === -1) {
 			uri += "#";
@@ -263,8 +267,11 @@ var exports = exports || this,
 	// JSONInstance class
 	//
 	
-	function JSONInstance(env, json, uri) {
+	function JSONInstance(env, json, uri, fd) {
 		if (json instanceof JSONInstance) {
+			if (typeof fd !== "string") {
+				fd = json._fd;
+			}
 			if (typeof uri !== "string") {
 				uri = json._uri;
 			}
@@ -278,6 +285,7 @@ var exports = exports || this,
 		this._env = env;
 		this._value = json;
 		this._uri = uri;
+		this._fd = fd || ".";  //TODO: Make default enviromental setting
 	}
 	
 	JSONInstance.prototype.getEnvironment = function () {
@@ -304,13 +312,17 @@ var exports = exports || this,
 		return keys(this._value);
 	};
 	
+	JSONInstance.prototype.getFragmentDelimiter = function () {
+		return ".";
+	};
+	
 	JSONInstance.prototype.getProperty = function (key) {
 		var value = this._value ? this._value[key] : undefined;
 		if (value instanceof JSONInstance) {
 			return value;
 		}
 		//else
-		return new JSONInstance(this._env, value, this._uri + "." + key);
+		return new JSONInstance(this._env, value, this._uri + this._fd + escapeURIComponent(key), this._fd);
 	};
 	
 	JSONInstance.prototype.getProperties = function () {
@@ -322,14 +334,14 @@ var exports = exports || this,
 				if (value instanceof JSONInstance) {
 					return value;
 				}
-				return new JSONInstance(self._env, value, self._uri + "." + key);
+				return new JSONInstance(self._env, value, self._uri + self._fd + escapeURIComponent(key), self._fd);
 			});
 		} else if (type === "array") {
 			return mapArray(this._value, function (value, key) {
 				if (value instanceof JSONInstance) {
 					return value;
 				}
-				return new JSONInstance(self._env, value, self._uri + "." + key);
+				return new JSONInstance(self._env, value, self._uri + self._fd + escapeURIComponent(key), self._fd);
 			});
 		}
 	};
@@ -356,6 +368,7 @@ var exports = exports || this,
 	//
 	
 	function JSONSchema(env, json, uri, schema) {
+		var fr;
 		JSONInstance.call(this, env, json, uri);
 		
 		if (schema === true) {
@@ -365,13 +378,23 @@ var exports = exports || this,
 		} else {
 			this._schema = schema instanceof JSONSchema ? schema : this._env.getDefaultSchema() || JSONSchema.createEmptySchema();
 		}
+		
+		//if (this._schema._attributes && typeof this._schema._attributes["fragmentResolution"] === "string") {
+		//	this._fd = this._schema._attributes["fragmentResolution"];
+		//}
+		fr = this._schema.getValueOfProperty("fragmentResolution");
+		if (fr === "dot-delimited") {
+			this._fd = ".";
+		} else if (fr === "slash-delimited") {
+			this._fd = "/";
+		}
 	}
 	
 	JSONSchema.prototype = createObject(JSONInstance.prototype);
 	
 	JSONSchema.createEmptySchema = function (env) {
 		var schema = createObject(JSONSchema.prototype);
-		JSONInstance.call(schema, env, {}, undefined);
+		JSONInstance.call(schema, env, {}, undefined, undefined);
 		schema._schema = schema;
 		return schema;
 	};
@@ -1267,6 +1290,7 @@ var exports = exports || this,
 		
 		"optional" : true,
 		"default" : {},
+		"fragmentResolution" : "dot-delimited",
 		
 		"parser" : function (instance, self) {
 			var selfProperties = self.getProperty("properties");
@@ -1389,7 +1413,13 @@ var exports = exports || this,
 			"fragmentResolution" : {
 				"type" : "string",
 				"optional" : true,
-				"default" : "slash-delimited"
+				"default" : "slash-delimited",
+				
+				"parser" : function (instance, self) {
+					if (typeof instance.getValue() === "string") {
+						return instance.getValue();
+					}
+				}
 			},
 			
 			"root" : {
@@ -1443,7 +1473,6 @@ var exports = exports || this,
 			}
 		],
 		
-		"fragmentResolution" : "dot-delimited",
 		"extends" : {"$ref" : "http://json-schema.org/schema#"},
 		
 		//This is here so hyper-schema knows how to extend itself
