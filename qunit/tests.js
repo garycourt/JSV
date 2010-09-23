@@ -279,9 +279,13 @@ test("Extends Validation", function () {
 
 test("JSON Schema Validation", function () {
 	var schema = env.findSchema("http://json-schema.org/schema");
-	equal(schema.validate(schema).errors.length, 0);
+	var hyperSchema = env.findSchema("http://json-schema.org/hyper-schema");
+	var links = env.findSchema("http://json-schema.org/links");
 	
-	//TODO: Test hyper-schema, and others
+	equal(schema.validate(schema).errors.length, 0, "schema.validate(schema)");
+	equal(hyperSchema.validate(schema).errors.length, 0, "hyperSchema.validate(schema)");
+	equal(hyperSchema.validate(hyperSchema).errors.length, 0, "hyperSchema.validate(hyperSchema)");
+	equal(hyperSchema.validate(links).errors.length, 0, "hyperSchema.validate(links)");
 });
 
 test("Links Validation", function () {
