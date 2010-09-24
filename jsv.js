@@ -418,7 +418,7 @@ var exports = exports || this,
 			return parser(property, schemaProperty, arg);
 		}
 		//else
-		return property;
+		return property.getValue();
 	};
 	
 	JSONSchema.prototype.getLink = function (href, instance) {
@@ -924,7 +924,7 @@ var exports = exports || this,
 					if (instance.getType() === "number") {
 						minimum = schema.getAttribute("minimum");
 						minimumCanEqual = schema.getAttribute("minimumCanEqual");
-						if (instance.getValue() < minimum || (minimumCanEqual === false && instance.getValue() === minimum)) {
+						if (typeof minimum === "number" && (instance.getValue() < minimum || (minimumCanEqual === false && instance.getValue() === minimum))) {
 							report.addError(instance, schema, "minimum", "Number is less then the required minimum value", minimum);
 						}
 					}
@@ -946,7 +946,7 @@ var exports = exports || this,
 					if (instance.getType() === "number") {
 						maximum = schema.getAttribute("maximum");
 						maximumCanEqual = schema.getAttribute("maximumCanEqual");
-						if (instance.getValue() > maximum || (maximumCanEqual === false && instance.getValue() === maximum)) {
+						if (typeof maximum === "number" && (instance.getValue() > maximum || (maximumCanEqual === false && instance.getValue() === maximum))) {
 							report.addError(instance, schema, "maximum", "Number is greater then the required maximum value", maximum);
 						}
 					}
@@ -1001,7 +1001,7 @@ var exports = exports || this,
 					var minItems;
 					if (instance.getType() === "array") {
 						minItems = schema.getAttribute("minItems");
-						if (instance.getProperties().length < minItems) {
+						if (typeof minItems === "number" && instance.getProperties().length < minItems) {
 							report.addError(instance, schema, "minItems", "The number of items is less then the required minimum", minItems);
 						}
 					}
@@ -1023,7 +1023,7 @@ var exports = exports || this,
 					var maxItems;
 					if (instance.getType() === "array") {
 						maxItems = schema.getAttribute("maxItems");
-						if (instance.getProperties().length > maxItems) {
+						if (typeof maxItems === "number" && instance.getProperties().length > maxItems) {
 							report.addError(instance, schema, "maxItems", "The number of items is greater then the required maximum", maxItems);
 						}
 					}
@@ -1102,7 +1102,7 @@ var exports = exports || this,
 					var minLength;
 					if (instance.getType() === "string") {
 						minLength = schema.getAttribute("minLength");
-						if (instance.getValue().length < minLength) {
+						if (typeof minLength === "number" && instance.getValue().length < minLength) {
 							report.addError(instance, schema, "minLength", "String is less then the required minimum length", minLength);
 						}
 					}
@@ -1123,7 +1123,7 @@ var exports = exports || this,
 					var maxLength;
 					if (instance.getType() === "string") {
 						maxLength = schema.getAttribute("maxLength");
-						if (instance.getValue().length > maxLength) {
+						if (typeof maxLength === "number" && instance.getValue().length > maxLength) {
 							report.addError(instance, schema, "maxLength", "String is greater then the required maximum length", maxLength);
 						}
 					}
@@ -1157,24 +1157,12 @@ var exports = exports || this,
 			
 			"title" : {
 				"type" : "string",
-				"optional" : true,
-				
-				"parser" : function (instance, self) {
-					if (instance.getType() === "string") {
-						return instance.getValue();
-					}
-				}
+				"optional" : true
 			},
 			
 			"description" : {
 				"type" : "string",
-				"optional" : true,
-				
-				"parser" : function (instance, self) {
-					if (instance.getType() === "string") {
-						return instance.getValue();
-					}
-				}
+				"optional" : true
 			},
 			
 			"format" : {
@@ -1192,7 +1180,7 @@ var exports = exports || this,
 					if (instance.getType() === "string") {
 						format = schema.getAttribute("format");
 						formatValidators = self.getValueOfProperty("formatValidators");
-						if (formatValidators[format] !== O[format] && typeof formatValidators[format] === "function" && !formatValidators[format].call(this, instance, report)) {
+						if (typeof format === "string" && formatValidators[format] !== O[format] && typeof formatValidators[format] === "function" && !formatValidators[format].call(this, instance, report)) {
 							report.addError(instance, schema, "format", "String is not in the required format", format);
 						}
 					}
@@ -1203,22 +1191,12 @@ var exports = exports || this,
 			
 			"contentEncoding" : {
 				"type" : "string",
-				"optional" : true,
-				
-				"parser" : function (instance, self) {
-					if (instance.getType() === "string") {
-						return instance.getValue();
-					}
-				}
+				"optional" : true
 			},
 			
 			"default" : {
 				"type" : "any",
-				"optional" : true,
-				
-				"parser" : function (instance, self) {
-					return instance.getValue();
-				}
+				"optional" : true
 			},
 			
 			"divisibleBy" : {
@@ -1341,10 +1319,10 @@ var exports = exports || this,
 						return parser(property, schemaProperty);
 					}
 					//else
-					return property;
+					return property.getValue();
 				});
 			}
-			return instance;
+			return instance.getValue();
 		},
 		
 		"validator" : function (instance, schema, self, report, parent, parentSchema) {
@@ -1448,13 +1426,7 @@ var exports = exports || this,
 			"fragmentResolution" : {
 				"type" : "string",
 				"optional" : true,
-				"default" : "slash-delimited",
-				
-				"parser" : function (instance, self) {
-					if (typeof instance.getValue() === "string") {
-						return instance.getValue();
-					}
-				}
+				"default" : "slash-delimited"
 			},
 			
 			"root" : {
@@ -1539,7 +1511,21 @@ var exports = exports || this,
 			"properties" : {
 				"type" : "object",
 				"additionalProperties" : {"$ref" : "http://json-schema.org/hyper-schema#"},
-				"optional" : true
+				"optional" : true,
+				
+				"parser" : function (instance, self, arg) {
+					var env = instance.getEnvironment(),
+						selfEnv = self.getEnvironment();
+					if (instance.getType() === "object") {
+						if (arg) {
+							return env.createSchema(instance.getProperty(arg), selfEnv.findSchema(self.resolveURI("http://json-schema.org/hyper-schema#")));
+						} else {
+							return JSV.mapObject(instance.getProperties(), function (instance) {
+								return env.createSchema(instance, selfEnv.findSchema(self.resolveURI("http://json-schema.org/hyper-schema#")));
+							});
+						}
+					}
+				}
 			}
 		}
 	}, DRAFT_02_HYPERSCHEMA, "http://json-schema.org/links#");
