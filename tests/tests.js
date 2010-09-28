@@ -1,5 +1,10 @@
 var JSV = require('./jsv').JSV,
-	env;
+	env,
+	ENVIRONMENTS = [
+		"json-schema-draft-01",
+		"json-schema-draft-02"
+	],
+	curEnvId;
 
 //calls o(true) if no error is thrown
 function okNoError(func, msg) {
@@ -21,13 +26,27 @@ function okError(func, msg) {
 	}
 }
 
+//
+//
+// Tests
+//
+//
+
+for (curEnvId = 0; curEnvId < ENVIRONMENTS.length; ++curEnvId) {
+
+module(ENVIRONMENTS[curEnvId]);
+
+(function (id) {
 test("Acquire Validator", function () {
+	env = null;
+	
 	ok(JSV, "JSV is loaded");
 	
-	env = JSV.createEnvironment();
+	env = JSV.createEnvironment(id);
 	
-	ok(env, "Environment created");
+	ok(env, id + " environment created");
 });
+}(ENVIRONMENTS[curEnvId]));
 
 test("Primitive Validation", function () {
 	equal(env.validate({}).errors.length, 0, "Object");
@@ -179,6 +198,7 @@ test("MinItems/MaxItems Validation", function () {
 	notEqual(env.validate([1, 2, 3, 4], { minItems : 1, maxItems : 3 }).errors.length, 0);
 });
 
+if (curEnvId >= 1) {
 test("UniqueItems Validation", function () {
 	equal(env.validate([], {}).errors.length, 0);
 	equal(env.validate([], { uniqueItems : true }).errors.length, 0);
@@ -194,6 +214,7 @@ test("UniqueItems Validation", function () {
 	notEqual(env.validate([1, 2, 1], { uniqueItems : true }).errors.length, 0);
 	notEqual(env.validate(['a', 'b', 'b'], { uniqueItems : true }).errors.length, 0);
 });
+}
 
 test("Pattern Validation", function () {
 	equal(env.validate('', {}).errors.length, 0);
@@ -232,6 +253,20 @@ test("Format Validation", function () {
 	//TODO
 });
 
+if (curEnvId === 0) {
+test("MaxDecimal Validation", function () {
+	equal(env.validate(0, {}).errors.length, 0);
+	equal(env.validate(0, { maxDecimal : 0 }).errors.length, 0);
+	equal(env.validate(0, { maxDecimal : 1 }).errors.length, 0);
+	equal(env.validate(0.22, { maxDecimal : 2 }).errors.length, 0);
+	equal(env.validate(0.33, { maxDecimal : 3 }).errors.length, 0);
+	
+	notEqual(env.validate(0.1, { maxDecimal : 0 }).errors.length, 0);
+	notEqual(env.validate(0.111, { maxDecimal : 1 }).errors.length, 0);
+});
+}
+
+if (curEnvId >= 1) {
 test("DivisibleBy Validation", function () {
 	equal(env.validate(0, {}).errors.length, 0);
 	equal(env.validate(0, { divisibleBy : 1 }).errors.length, 0);
@@ -246,6 +281,7 @@ test("DivisibleBy Validation", function () {
 	notEqual(env.validate(4.5, { divisibleBy : 2 }).errors.length, 0);
 	notEqual(env.validate(7.5, { divisibleBy : 1.8 }).errors.length, 0);
 });
+}
 
 test("Disallow Validation", function () {
 	equal(env.validate({}, { disallow : ['null', 'boolean', 'number', 'integer', 'string', 'array'] }).errors.length, 0, "Object");
@@ -314,3 +350,5 @@ test("Register Schemas", function () {
 });
 
 //test("", function () {});
+
+}
