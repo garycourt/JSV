@@ -342,6 +342,17 @@ test("Links Validation", function () {
 	notEqual(env.validate(null, { "$ref" : "http://test.example.com/2" }).errors.length, 0);
 });
 
+test("PathStart Validation", function () {
+	var instance = env.createInstance({}, "http://test.example.com/4"),
+		schema = env.createSchema({"pathStart" : "http://test.example.com"});
+	
+	equal(env.validate(instance, schema).errors.length, 0);
+	
+	instance = env.createInstance({});  //random URI
+	
+	notEqual(env.validate(instance, schema).errors.length, 0);
+});
+
 test("Register Schemas", function () {
 	var schema = env.createSchema({'type' : 'string'}, null, 'http://test.example.com/1');
 	equal(env.findSchema('http://json-schema.org/hyper-schema').validate(schema).errors.length, 0);
