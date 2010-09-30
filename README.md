@@ -1,34 +1,50 @@
-JSV: JSON Schema (Revision 2) Validator
-=======================================
+JSV: JSON Schema Validator
+==========================
 
-JSV is a JavaScript implementation of a extendable, fully compliant [revision 2 JSON Schema](http://tools.ietf.org/html/draft-zyp-json-schema-02) validator with the following features:
+JSV is a JavaScript implementation of a extendable, fully compliant JSON Schema validator with the following features:
 
-* Full implementation of the revision 2 JSON Schema specification; will validate any JSON Schema written to this specification.
-* Supports `full` and `describedby` hyper links.
-* Easily extendable to include new schema attributes, value types, and string formats.
-* Validates itself, and is bootstrapped from the JSON Schema schema.
-* Includes over 170 unit tests to test all parts of the specification & validator.
-* Includes rewritten and validated schemas from the JSON Schema specification.
+* The fastest extendable JSON validator available!
+* Complete implementation of all current JSON Schema specifications.
+* Supports creating individual environments (sandboxes) that validate using a particular schema specification.
+* Provides an intuitive API for creating new validating schema attributes, or whole new custom schema schemas.
+* Supports `self`, `full` and `describedby` hyper links.
+* Validates itself, and is bootstrapped from the JSON Schema schemas.
+* Includes over 170 unit tests for testing all parts of the specifications.
+* Works in all ECMAScript 3 environments, including all web browsers and Node.js.
+* Licensed under the FreeBSD License, a very open license.
 
-JSV is currently in beta; use at your own risk as there still may be bugs present, and APIs are subject to change.
+## It's a what?
 
-## JSON Schema
+**JSON** (an acronym for **JavaScript Object Notation**) is a lightweight data-interchange format. It is easy for humans to read and write. It is easy for machines to parse and generate. It is based on a subset of the JavaScript Programming Language, Standard ECMA-262 3rd Edition - December 1999. JSON is a text format that is completely language independent but uses conventions that are familiar to programmers of the C-family of languages, including C, C++, C#, Java, JavaScript, Perl, Python, and many others. These properties make JSON an ideal data-interchange language. \[[json.org](http://json.org)\]
 
-The revision 2 specification of JSON Schema can be found at 
-[http://tools.ietf.org/html/draft-zyp-json-schema-02](http://tools.ietf.org/html/draft-zyp-json-schema-02).
+**JSON Schema** is a JSON media type for defining the structure of JSON data.  JSON Schema provides a contract for what JSON data is required for a given application and how to interact with it.  JSON Schema is intended to define validation, documentation, hyperlink navigation, and interaction control of JSON data. \[[draft-zyp-json-schema-02](http://tools.ietf.org/html/draft-zyp-json-schema-02)\]
+
+A **JSON validator** is a program that takes JSON data and, with a provided schema, will ensure that the provided JSON is structured in the way defined by the schema. This ensures that if validation has passed, the JSON instance is guaranteed to be in the expected format. It will also provide an explanation on why a particular instance failed validation.
 
 ## Example
 
-Here's an example on how to validate some JSON with the JSON Schema Validator:
+Here's an example on how to validate some JSON with JSV:
 
 	var JSV = require("./jsv").JSV;
 	var json = {};
 	var schema = {"type" : "object"};
-	var report = JSV.validate(json, schema);
+	var env = JSV.createEnvironment();
+	var report = env.validate(json, schema);
 	
 	if (report.errors.length === 0) {
 		//JSON is valid against the schema
 	}
+
+## Environments & JSON Schema support
+
+There is no one way to validate JSON, just like there is no one way to validate XML. Even the JSON Schema specification has gone through several revisions which are not 100% backwards compatible with each other. To solve the issue of using numerous schemas already written in older revisions, JSV provides customizable environments to validate your JSON within. 
+
+When creating an environment, you can optionally specify how you want that environment to behave. For example, this allows you to specify which version of the JSON Schema you would like the environment to behave like. JSV already provides the following environments:
+
+*	`json-schema-draft-02`
+*	`json-schema-draft-01`
+
+//BELOW IS OUT OF DATE//
 
 ## APIs
 
