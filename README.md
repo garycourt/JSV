@@ -86,7 +86,7 @@ Environments can also be customized and registered for multiple reuse. (See the 
 
 The following methods are used to validate JSON data:
 
-### JSV.createEnvironment(*environmentID**?*) *->* *&lt;Environment&gt;*
+### JSV.createEnvironment(*environmentID?*) *->* *&lt;Environment&gt;*
 
 *	*environmentID* *&lt;String&gt;* *(optional)* The ID of the environment to clone a new Environment from
 
