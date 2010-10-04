@@ -1,4 +1,4 @@
-var JSV = require('./jsv').JSV;
+JSV = require('./jsv').JSV;
 
 //calls o(true) if no error is thrown
 function okNoError(func, msg) {

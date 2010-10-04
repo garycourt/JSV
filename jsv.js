@@ -3,7 +3,7 @@
  * 
  * @fileOverview A JavaScript implementation of a extendable, fully compliant revision 2 JSON Schema validator.
  * @author <a href="mailto:gary.court@gmail.com">Gary Court</a>
- * @version 2.0
+ * @version 2.0.1
  * @see http://github.com/garycourt/JSV
  */
 
@@ -47,6 +47,7 @@ var exports = exports || this,
 	var URL = require('url'),
 		
 		O = {},
+		I2H = '0123456789abcdef'.split(''),
 		GLOBAL_REGISTRY,
 		JSONSCHEMA_SCHEMA,
 		HYPERSCHEMA_SCHEMA,
@@ -112,48 +113,63 @@ var exports = exports || this,
 		};
 	}
 	
+	function searchArray(arr, o) {
+		var x = 0, xl = arr.length;
+		for (; x < xl; ++x) {
+			if (arr[x] === o) {
+				return x;
+			}
+		}
+		return -1;
+	}
+		
+	if (Array.prototype.indexOf) {
+		searchArray = function (arr, o) {
+			return Array.prototype.indexOf.call(arr, o);
+		};
+	}
+	
 	function toArray(o) {
 		return o !== undefined && o !== null ? (o instanceof Array && !o.callee ? o : (typeof o.length !== 'number' || o.split || o.setInterval || o.call ? [ o ] : Array.prototype.slice.call(o))) : [];
 	}
 	
 	function randomUUID() {
-		var i2h = '0123456789abcdef';
 		return [
-			i2h[Math.floor(Math.random() * 0x10)],
-			i2h[Math.floor(Math.random() * 0x10)],
-			i2h[Math.floor(Math.random() * 0x10)],
-			i2h[Math.floor(Math.random() * 0x10)],
-			i2h[Math.floor(Math.random() * 0x10)],
-			i2h[Math.floor(Math.random() * 0x10)],
-			i2h[Math.floor(Math.random() * 0x10)],
-			i2h[Math.floor(Math.random() * 0x10)],
+			I2H[Math.floor(Math.random() * 0x10)],
+			I2H[Math.floor(Math.random() * 0x10)],
+			I2H[Math.floor(Math.random() * 0x10)],
+			I2H[Math.floor(Math.random() * 0x10)],
+			I2H[Math.floor(Math.random() * 0x10)],
+			I2H[Math.floor(Math.random() * 0x10)],
+			I2H[Math.floor(Math.random() * 0x10)],
+			I2H[Math.floor(Math.random() * 0x10)],
 			'-',
-			i2h[Math.floor(Math.random() * 0x10)],
-			i2h[Math.floor(Math.random() * 0x10)],
-			i2h[Math.floor(Math.random() * 0x10)],
-			i2h[Math.floor(Math.random() * 0x10)],
+			I2H[Math.floor(Math.random() * 0x10)],
+			I2H[Math.floor(Math.random() * 0x10)],
+			I2H[Math.floor(Math.random() * 0x10)],
+			I2H[Math.floor(Math.random() * 0x10)],
 			'-4',  //set 4 high bits of time_high field to version
-			i2h[Math.floor(Math.random() * 0x10)],
-			i2h[Math.floor(Math.random() * 0x10)],
-			i2h[Math.floor(Math.random() * 0x10)],
+			I2H[Math.floor(Math.random() * 0x10)],
+			I2H[Math.floor(Math.random() * 0x10)],
+			I2H[Math.floor(Math.random() * 0x10)],
 			'-',
-			i2h[(Math.floor(Math.random() * 0x10) & 0x3) | 0x8],  //specify 2 high bits of clock sequence
-			i2h[Math.floor(Math.random() * 0x10)],
-			i2h[Math.floor(Math.random() * 0x10)],
-			i2h[Math.floor(Math.random() * 0x10)],
+			I2H[(Math.floor(Math.random() * 0x10) & 0x3) | 0x8],  //specify 2 high bits of clock sequence
+			I2H[Math.floor(Math.random() * 0x10)],
+			I2H[Math.floor(Math.random() * 0x10)],
+			I2H[Math.floor(Math.random() * 0x10)],
 			'-',
-			i2h[Math.floor(Math.random() * 0x10)],
-			i2h[Math.floor(Math.random() * 0x10)],
-			i2h[Math.floor(Math.random() * 0x10)],
-			i2h[Math.floor(Math.random() * 0x10)],
-			i2h[Math.floor(Math.random() * 0x10)],
-			i2h[Math.floor(Math.random() * 0x10)],
-			i2h[Math.floor(Math.random() * 0x10)],
-			i2h[Math.floor(Math.random() * 0x10)],
-			i2h[Math.floor(Math.random() * 0x10)],
-			i2h[Math.floor(Math.random() * 0x10)],
-			i2h[Math.floor(Math.random() * 0x10)],
-			i2h[Math.floor(Math.random() * 0x10)]
+			I2H[Math.floor(Math.random() * 0x10)],
+			I2H[Math.floor(Math.random() * 0x10)],
+			I2H[Math.floor(Math.random() * 0x10)],
+			I2H[Math.floor(Math.random() * 0x10)],
+			I2H[Math.floor(Math.random() * 0x10)],
+			I2H[Math.floor(Math.random() * 0x10)],
+			I2H[Math.floor(Math.random() * 0x10)],
+			I2H[Math.floor(Math.random() * 0x10)],
+			I2H[Math.floor(Math.random() * 0x10)],
+			I2H[Math.floor(Math.random() * 0x10)],
+			I2H[Math.floor(Math.random() * 0x10)],
+			I2H[Math.floor(Math.random() * 0x10)]
 		].join('');
 	}
 	
@@ -594,7 +610,7 @@ var exports = exports || this,
 			var type = typeOf(value),
 				index;
 			if (type === 'object' || type === 'array') {
-				index = this._value2instanceKey.indexOf(value);
+				index = searchArray(this._value2instanceKey, value);
 				if (index !== -1) {
 					return this._value2instanceValue[index];
 				}
@@ -614,7 +630,7 @@ var exports = exports || this,
 		},
 		
 		isValidatedBy : function (uri, schemaUri) {
-			return !!this._validated[uri] && this._validated[uri].indexOf(schemaUri) !== -1;
+			return !!this._validated[uri] && searchArray(this._validated[uri], schemaUri) !== -1;
 		},
 		
 		getSchemaOfURI : function (uri) {
