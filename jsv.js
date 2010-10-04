@@ -3,7 +3,7 @@
  * 
  * @fileOverview A JavaScript implementation of a extendable, fully compliant revision 2 JSON Schema validator.
  * @author <a href="mailto:gary.court@gmail.com">Gary Court</a>
- * @version 2.0.1
+ * @version 2.0.2
  * @see http://github.com/garycourt/JSV
  */
 
@@ -444,7 +444,7 @@ var exports = exports || this,
 		
 		'enum' : function (ji, requiredSchema, report) {
 			var enums = requiredSchema.enums(), x, xl;
-			if (enums) {
+			if (ji.getPrimitiveType() !== 'undefined' && enums) {
 				for (x = 0, xl = enums.length; x < xl; ++x) {
 					if (ji.equals(enums[x])) {
 						return true;
