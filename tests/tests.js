@@ -360,6 +360,58 @@ test("Register Schemas", function () {
 	notEqual(env.validate({}, { '$ref' : 'http://test.example.com/1' }).errors.length, 0);
 });
 
-//test("", function () {});
+test("Complex Examples", function () {
+	env.createSchema({
+	   "id":"Common#",
+	   "type":"object",
+	   "properties":{
+	       "!":{"type":"string","enum":["Common"]},
+	   },
+	   "additionalProperties":false,
+	}, undefined, "Common#");
+	
+	var report = env.validate({
+		  "!" : "List",
+		  "list" : [
+		    {
+		      "!" : "Text",
+		      "common" : {"!":"NotCommon"}
+		    }
+		  ],
+		  "common" : {"!":"Common"}
+		},
+		
+		{
+		   "properties":{
+		       "!":{"type":"string","enum":["List"]},
+		       "list":{
+		           "type":"array",
+		           "items":{
+		               "type":[
+		                   {
+		                       "type":"object",
+		                       "properties":{
+		                           "!":{"type":"string","enum":["Music"]},
+		                           "common":{"$ref":"Common#"}
+		                       },
+		                   },
+		                   {
+		                       "type":"object",
+		                       "properties":{
+		                           "!":{"type":"string","enum":["Text"]},
+		                           "common":{"$ref":"Common#"}
+		                       },
+		                   }
+		               ]
+		           }
+		       },
+		
+		       "common":{"$ref":"Common#"},
+		   }
+		}
+	);
+	
+	notEqual(report.errors.length, 0);
+});
 
 }
