@@ -189,8 +189,6 @@ ul.inheritsList
 <h2>Classes</h2>
 <ul class="classList">
 	
-	<li><i><a href="../symbols/_global_.html">_global_</a></i></li>
-	
 	<li><a href="../symbols/Environment.html">Environment</a></li>
 	
 	<li><a href="../symbols/JSONInstance.html">JSONInstance</a></li>
@@ -200,6 +198,8 @@ ul.inheritsList
 	<li><a href="../symbols/JSV.html">JSV</a></li>
 	
 	<li><a href="../symbols/Report.html">Report</a></li>
+	
+	<li><a href="../symbols/ValidationError.html">ValidationError</a></li>
 	
 </ul>
 <hr />
@@ -242,7 +242,7 @@ ul.inheritsList
 							<div class="fixedFont">
 								<b><a href="../symbols/JSV.html#constructor">JSV</a></b>
 							</div>
-							<div class="description"></div>
+							<div class="description">A globaly accessible object that provides the ability to create and manage Environments,as well as providing utility methods.</div>
 						</td>
 					</tr>
 				</tbody>
@@ -271,7 +271,7 @@ ul.inheritsList
 							<td class="nameDescription">
 								<div class="fixedFont">JSV.<b><a href="../symbols/JSV.html#.createEnvironment">createEnvironment</a></b>(id)
 								</div>
-								<div class="description"></div>
+								<div class="description">Creates and returns a new <a href="../symbols/Environment.html">Environment</a> that is a clone of the environment registered with the provided ID.</div>
 							</td>
 						</tr>
 					
@@ -280,7 +280,7 @@ ul.inheritsList
 							<td class="nameDescription">
 								<div class="fixedFont">JSV.<b><a href="../symbols/JSV.html#.getDefaultEnvironmentID">getDefaultEnvironmentID</a></b>()
 								</div>
-								<div class="description"></div>
+								<div class="description">Returns the ID of the default environment.</div>
 							</td>
 						</tr>
 					
@@ -289,7 +289,7 @@ ul.inheritsList
 							<td class="nameDescription">
 								<div class="fixedFont">JSV.<b><a href="../symbols/JSV.html#.isJSONInstance">isJSONInstance</a></b>(o)
 								</div>
-								<div class="description"></div>
+								<div class="description">Returns if the provide value is an instance of <a href="../symbols/JSONInstance.html">JSONInstance</a>.</div>
 							</td>
 						</tr>
 					
@@ -298,7 +298,7 @@ ul.inheritsList
 							<td class="nameDescription">
 								<div class="fixedFont">JSV.<b><a href="../symbols/JSV.html#.isJSONSchema">isJSONSchema</a></b>(o)
 								</div>
-								<div class="description"></div>
+								<div class="description">Returns if the provide value is an instance of <a href="../symbols/JSONSchema.html">JSONSchema</a>.</div>
 							</td>
 						</tr>
 					
@@ -307,7 +307,7 @@ ul.inheritsList
 							<td class="nameDescription">
 								<div class="fixedFont">JSV.<b><a href="../symbols/JSV.html#.registerEnvironment">registerEnvironment</a></b>(id, env)
 								</div>
-								<div class="description"></div>
+								<div class="description">Registers the provided <a href="../symbols/Environment.html">Environment</a> with the provided ID.</div>
 							</td>
 						</tr>
 					
@@ -316,7 +316,7 @@ ul.inheritsList
 							<td class="nameDescription">
 								<div class="fixedFont">JSV.<b><a href="../symbols/JSV.html#.setDefaultEnvironmentID">setDefaultEnvironmentID</a></b>(id)
 								</div>
-								<div class="description"></div>
+								<div class="description">Sets which registered ID is the default environment.</div>
 							</td>
 						</tr>
 					
@@ -343,9 +343,9 @@ ul.inheritsList
 						<tr>
 							<td class="attributes">&lt;static&gt; &nbsp;</td>
 							<td class="nameDescription">
-								<div class="fixedFont">JSV.<b><a href="../symbols/JSV.html#.event:clone">clone</a></b>(obj, deep)
+								<div class="fixedFont">JSV.<b><a href="../symbols/JSV.html#.event:clone">clone</a></b>(o, deep)
 								</div>
-								<div class="description"></div>
+								<div class="description">Creates a copy of the target object.</div>
 							</td>
 						</tr>
 					
@@ -354,7 +354,7 @@ ul.inheritsList
 							<td class="nameDescription">
 								<div class="fixedFont">JSV.<b><a href="../symbols/JSV.html#.event:createObject">createObject</a></b>(proto)
 								</div>
-								<div class="description"></div>
+								<div class="description">Return a new object that inherits all of the properties of the provided object.</div>
 							</td>
 						</tr>
 					
@@ -363,16 +363,16 @@ ul.inheritsList
 							<td class="nameDescription">
 								<div class="fixedFont">JSV.<b><a href="../symbols/JSV.html#.event:escapeURIComponent">escapeURIComponent</a></b>(str)
 								</div>
-								<div class="description"></div>
+								<div class="description">Properly escapes a URI component for embedding into a URI string.</div>
 							</td>
 						</tr>
 					
 						<tr>
 							<td class="attributes">&lt;static&gt; &nbsp;</td>
 							<td class="nameDescription">
-								<div class="fixedFont">JSV.<b><a href="../symbols/JSV.html#.event:filterArray">filterArray</a></b>(arr, func, scope)
+								<div class="fixedFont">JSV.<b><a href="../symbols/JSV.html#.event:filterArray">filterArray</a></b>(arr, iterator, scope)
 								</div>
-								<div class="description"></div>
+								<div class="description">Returns a new array that only contains the items allowed by the iterator.</div>
 							</td>
 						</tr>
 					
@@ -381,7 +381,7 @@ ul.inheritsList
 							<td class="nameDescription">
 								<div class="fixedFont">JSV.<b><a href="../symbols/JSV.html#.event:formatURI">formatURI</a></b>(uri)
 								</div>
-								<div class="description"></div>
+								<div class="description">Returns a URI that is formated for JSV.</div>
 							</td>
 						</tr>
 					
@@ -390,25 +390,25 @@ ul.inheritsList
 							<td class="nameDescription">
 								<div class="fixedFont">JSV.<b><a href="../symbols/JSV.html#.event:keys">keys</a></b>(o)
 								</div>
-								<div class="description"></div>
+								<div class="description">Returns an array of the names of all properties of an object.</div>
 							</td>
 						</tr>
 					
 						<tr>
 							<td class="attributes">&lt;static&gt; &nbsp;</td>
 							<td class="nameDescription">
-								<div class="fixedFont">JSV.<b><a href="../symbols/JSV.html#.event:mapArray">mapArray</a></b>(arr, func, scope)
+								<div class="fixedFont">JSV.<b><a href="../symbols/JSV.html#.event:mapArray">mapArray</a></b>(arr, iterator, scope)
 								</div>
-								<div class="description"></div>
+								<div class="description">Returns a new array with each item transformed by the iterator.</div>
 							</td>
 						</tr>
 					
 						<tr>
 							<td class="attributes">&lt;static&gt; &nbsp;</td>
 							<td class="nameDescription">
-								<div class="fixedFont">JSV.<b><a href="../symbols/JSV.html#.event:mapObject">mapObject</a></b>(obj, func, scope)
+								<div class="fixedFont">JSV.<b><a href="../symbols/JSV.html#.event:mapObject">mapObject</a></b>(obj, iterator, scope)
 								</div>
-								<div class="description"></div>
+								<div class="description">Returns a new object with each property transformed by the iterator.</div>
 							</td>
 						</tr>
 					
@@ -417,7 +417,7 @@ ul.inheritsList
 							<td class="nameDescription">
 								<div class="fixedFont">JSV.<b><a href="../symbols/JSV.html#.event:mergeSchemas">mergeSchemas</a></b>(base, extra, isSchema)
 								</div>
-								<div class="description"></div>
+								<div class="description">Attempts to merge the values of two schemas together.</div>
 							</td>
 						</tr>
 					
@@ -426,7 +426,7 @@ ul.inheritsList
 							<td class="nameDescription">
 								<div class="fixedFont">JSV.<b><a href="../symbols/JSV.html#.event:pushUnique">pushUnique</a></b>(arr, o)
 								</div>
-								<div class="description"></div>
+								<div class="description">Mutates the array by pushing the provided value onto the array only if it is not already there.</div>
 							</td>
 						</tr>
 					
@@ -435,7 +435,7 @@ ul.inheritsList
 							<td class="nameDescription">
 								<div class="fixedFont">JSV.<b><a href="../symbols/JSV.html#.event:randomUUID">randomUUID</a></b>()
 								</div>
-								<div class="description"></div>
+								<div class="description">Generates a pseudo-random UUID.</div>
 							</td>
 						</tr>
 					
@@ -444,7 +444,7 @@ ul.inheritsList
 							<td class="nameDescription">
 								<div class="fixedFont">JSV.<b><a href="../symbols/JSV.html#.event:searchArray">searchArray</a></b>(arr, o)
 								</div>
-								<div class="description"></div>
+								<div class="description">Returns the first index in the array that the provided item is located at.</div>
 							</td>
 						</tr>
 					
@@ -453,7 +453,7 @@ ul.inheritsList
 							<td class="nameDescription">
 								<div class="fixedFont">JSV.<b><a href="../symbols/JSV.html#.event:toArray">toArray</a></b>(o)
 								</div>
-								<div class="description"></div>
+								<div class="description">Returns an array representation of a value.</div>
 							</td>
 						</tr>
 					
@@ -462,7 +462,7 @@ ul.inheritsList
 							<td class="nameDescription">
 								<div class="fixedFont">JSV.<b><a href="../symbols/JSV.html#.event:typeOf">typeOf</a></b>(o)
 								</div>
-								<div class="description"></div>
+								<div class="description">Returns the name of the type of the provided value.</div>
 							</td>
 						</tr>
 					
@@ -485,7 +485,7 @@ ul.inheritsList
 				</div>
 				
 				<div class="description">
-					
+					A globaly accessible object that provides the ability to create and manage Environments,as well as providing utility methods.
 					
 				</div>
 				
@@ -520,7 +520,7 @@ ul.inheritsList
 					
 					</div>
 					<div class="description">
-						
+						Creates and returns a new <a href="../symbols/Environment.html">Environment</a> that is a clone of the environment registered with the provided ID.If no environment ID is provided, the default environment is cloned.
 						
 						
 					</div>
@@ -535,7 +535,7 @@ ul.inheritsList
 									<span class="light fixedFont">{String}</span> <b>id</b>
 									<i>Optional</i>
 								</dt>
-								<dd></dd>
+								<dd>The ID of the environment to clone. If <code>undefined</code>, the default environment ID is used.</dd>
 							
 							</dl>
 						
@@ -548,7 +548,7 @@ ul.inheritsList
 								<dt>
 									<span class="light fixedFont">{Error}</span>  <b></b>
 								</dt>
-								<dd></dd>
+								<dd>If there is no environment registered with the provided ID</dd>
 							
 							</dl>
 						
@@ -556,7 +556,7 @@ ul.inheritsList
 							<dl class="detailList">
 							<dt class="heading">Returns:</dt>
 							
-								<dd><span class="light fixedFont">{<a href="../symbols/Environment.html">Environment</a>}</span> </dd>
+								<dd><span class="light fixedFont">{<a href="../symbols/Environment.html">Environment</a>}</span> A newly cloned <a href="../symbols/Environment.html">Environment</a></dd>
 							
 							</dl>
 						
@@ -573,7 +573,7 @@ ul.inheritsList
 					
 					</div>
 					<div class="description">
-						
+						Returns the ID of the default environment.
 						
 						
 					</div>
@@ -588,7 +588,7 @@ ul.inheritsList
 							<dl class="detailList">
 							<dt class="heading">Returns:</dt>
 							
-								<dd><span class="light fixedFont">{String}</span> </dd>
+								<dd><span class="light fixedFont">{String}</span> The ID of the default environment</dd>
 							
 							</dl>
 						
@@ -605,7 +605,7 @@ ul.inheritsList
 					
 					</div>
 					<div class="description">
-						
+						Returns if the provide value is an instance of <a href="../symbols/JSONInstance.html">JSONInstance</a>.
 						
 						
 					</div>
@@ -620,7 +620,7 @@ ul.inheritsList
 									<b>o</b>
 									
 								</dt>
-								<dd></dd>
+								<dd>The value to test</dd>
 							
 							</dl>
 						
@@ -631,7 +631,7 @@ ul.inheritsList
 							<dl class="detailList">
 							<dt class="heading">Returns:</dt>
 							
-								<dd><span class="light fixedFont">{Boolean}</span> </dd>
+								<dd><span class="light fixedFont">{Boolean}</span> If the provide value is an instance of <a href="../symbols/JSONInstance.html">JSONInstance</a></dd>
 							
 							</dl>
 						
@@ -648,7 +648,7 @@ ul.inheritsList
 					
 					</div>
 					<div class="description">
-						
+						Returns if the provide value is an instance of <a href="../symbols/JSONSchema.html">JSONSchema</a>.
 						
 						
 					</div>
@@ -663,7 +663,7 @@ ul.inheritsList
 									<b>o</b>
 									
 								</dt>
-								<dd></dd>
+								<dd>The value to test</dd>
 							
 							</dl>
 						
@@ -674,7 +674,7 @@ ul.inheritsList
 							<dl class="detailList">
 							<dt class="heading">Returns:</dt>
 							
-								<dd><span class="light fixedFont">{Boolean}</span> </dd>
+								<dd><span class="light fixedFont">{Boolean}</span> If the provide value is an instance of <a href="../symbols/JSONSchema.html">JSONSchema</a></dd>
 							
 							</dl>
 						
@@ -691,7 +691,7 @@ ul.inheritsList
 					
 					</div>
 					<div class="description">
-						
+						Registers the provided <a href="../symbols/Environment.html">Environment</a> with the provided ID.
 						
 						
 					</div>
@@ -706,13 +706,13 @@ ul.inheritsList
 									<span class="light fixedFont">{String}</span> <b>id</b>
 									
 								</dt>
-								<dd></dd>
+								<dd>The ID of the environment</dd>
 							
 								<dt>
 									<span class="light fixedFont">{<a href="../symbols/Environment.html">Environment</a>}</span> <b>env</b>
 									
 								</dt>
-								<dd></dd>
+								<dd>The environment to register</dd>
 							
 							</dl>
 						
@@ -733,7 +733,7 @@ ul.inheritsList
 					
 					</div>
 					<div class="description">
-						
+						Sets which registered ID is the default environment.
 						
 						
 					</div>
@@ -748,7 +748,7 @@ ul.inheritsList
 									<span class="light fixedFont">{String}</span> <b>id</b>
 									
 								</dt>
-								<dd></dd>
+								<dd>The ID of the registered environment that is default</dd>
 							
 							</dl>
 						
@@ -761,7 +761,7 @@ ul.inheritsList
 								<dt>
 									<span class="light fixedFont">{Error}</span>  <b></b>
 								</dt>
-								<dd></dd>
+								<dd>If there is no registered environment with the provided ID</dd>
 							
 							</dl>
 						
@@ -783,11 +783,11 @@ ul.inheritsList
 					<div class="fixedFont">&lt;static&gt; 
 					
 					
-					<span class="light">JSV.</span><b>clone</b>(obj, deep)
+					<span class="light">JSV.</span><b>clone</b>(o, deep)
 					
 					</div>
 					<div class="description">
-						
+						Creates a copy of the target object.<p>This method will create a new instance of the target, and then mixin the properties of the target.If <code>deep</code> is <code>true</code>, then each property will be cloned before mixin.</p><p><b>Warning</b>: This is not a generic clone function, as it will only properly clone objects and arrays.</p>
 						
 						
 					</div>
@@ -799,16 +799,16 @@ ul.inheritsList
 							<dt class="heading">Parameters:</dt>
 							
 								<dt>
-									<b>obj</b>
+									<span class="light fixedFont">{Any}</span> <b>o</b>
 									
 								</dt>
-								<dd></dd>
+								<dd>The value to clone</dd>
 							
 								<dt>
 									<span class="light fixedFont">{Boolean}</span> <b>deep</b>
 									<i>Optional, Default: false</i>
 								</dt>
-								<dd></dd>
+								<dd>If each property should be recursively cloned</dd>
 							
 							</dl>
 						
@@ -819,7 +819,7 @@ ul.inheritsList
 							<dl class="detailList">
 							<dt class="heading">Returns:</dt>
 							
-								<dd>A copy of the provided object</dd>
+								<dd>A cloned copy of the provided value</dd>
 							
 							</dl>
 						
@@ -836,7 +836,7 @@ ul.inheritsList
 					
 					</div>
 					<div class="description">
-						
+						Return a new object that inherits all of the properties of the provided object.
 						
 						
 					</div>
@@ -874,12 +874,12 @@ ul.inheritsList
 					<a name=".event:escapeURIComponent"> </a>
 					<div class="fixedFont">&lt;static&gt; 
 					
-					
+					<span class="light">{String}</span>
 					<span class="light">JSV.</span><b>escapeURIComponent</b>(str)
 					
 					</div>
 					<div class="description">
-						
+						Properly escapes a URI component for embedding into a URI string.
 						
 						
 					</div>
@@ -902,6 +902,13 @@ ul.inheritsList
 						
 						
 						
+							<dl class="detailList">
+							<dt class="heading">Returns:</dt>
+							
+								<dd><span class="light fixedFont">{String}</span> The escaped URI component</dd>
+							
+							</dl>
+						
 						
 						
 
@@ -911,11 +918,11 @@ ul.inheritsList
 					<div class="fixedFont">&lt;static&gt; 
 					
 					<span class="light">{Array}</span>
-					<span class="light">JSV.</span><b>filterArray</b>(arr, func, scope)
+					<span class="light">JSV.</span><b>filterArray</b>(arr, iterator, scope)
 					
 					</div>
 					<div class="description">
-						
+						Returns a new array that only contains the items allowed by the iterator.
 						
 						
 					</div>
@@ -930,19 +937,19 @@ ul.inheritsList
 									<span class="light fixedFont">{Array}</span> <b>arr</b>
 									
 								</dt>
-								<dd></dd>
+								<dd>The array to filter</dd>
 							
 								<dt>
-									<span class="light fixedFont">{Function}</span> <b>func</b>
+									<span class="light fixedFont">{Function}</span> <b>iterator</b>
 									
 								</dt>
-								<dd></dd>
+								<dd>The function that returns true if the provided property should be added to the array</dd>
 							
 								<dt>
 									<span class="light fixedFont">{Object}</span> <b>scope</b>
 									
 								</dt>
-								<dd></dd>
+								<dd>The value of <code>this</code> within the iterator</dd>
 							
 							</dl>
 						
@@ -953,7 +960,7 @@ ul.inheritsList
 							<dl class="detailList">
 							<dt class="heading">Returns:</dt>
 							
-								<dd><span class="light fixedFont">{Array}</span> </dd>
+								<dd><span class="light fixedFont">{Array}</span> A new array that contains the items allowed by the iterator</dd>
 							
 							</dl>
 						
@@ -970,7 +977,7 @@ ul.inheritsList
 					
 					</div>
 					<div class="description">
-						
+						Returns a URI that is formated for JSV. Currently, this only ensures that the URI ends with a hash tag (<code>#</code>).
 						
 						
 					</div>
@@ -1013,7 +1020,7 @@ ul.inheritsList
 					
 					</div>
 					<div class="description">
-						
+						Returns an array of the names of all properties of an object.
 						
 						
 					</div>
@@ -1028,7 +1035,7 @@ ul.inheritsList
 									<span class="light fixedFont">{Object|Array}</span> <b>o</b>
 									
 								</dt>
-								<dd></dd>
+								<dd>The object in question</dd>
 							
 							</dl>
 						
@@ -1039,7 +1046,7 @@ ul.inheritsList
 							<dl class="detailList">
 							<dt class="heading">Returns:</dt>
 							
-								<dd><span class="light fixedFont">{Array}</span> </dd>
+								<dd><span class="light fixedFont">{Array}</span> The names of all properties</dd>
 							
 							</dl>
 						
@@ -1052,11 +1059,11 @@ ul.inheritsList
 					<div class="fixedFont">&lt;static&gt; 
 					
 					<span class="light">{Array}</span>
-					<span class="light">JSV.</span><b>mapArray</b>(arr, func, scope)
+					<span class="light">JSV.</span><b>mapArray</b>(arr, iterator, scope)
 					
 					</div>
 					<div class="description">
-						
+						Returns a new array with each item transformed by the iterator.
 						
 						
 					</div>
@@ -1071,19 +1078,19 @@ ul.inheritsList
 									<span class="light fixedFont">{Array}</span> <b>arr</b>
 									
 								</dt>
-								<dd></dd>
+								<dd>The array to transform</dd>
 							
 								<dt>
-									<span class="light fixedFont">{Function}</span> <b>func</b>
+									<span class="light fixedFont">{Function}</span> <b>iterator</b>
 									
 								</dt>
-								<dd></dd>
+								<dd>A function that returns the new value of the provided item</dd>
 							
 								<dt>
 									<span class="light fixedFont">{Object}</span> <b>scope</b>
 									
 								</dt>
-								<dd></dd>
+								<dd>The value of <code>this</code> in the iterator</dd>
 							
 							</dl>
 						
@@ -1094,7 +1101,7 @@ ul.inheritsList
 							<dl class="detailList">
 							<dt class="heading">Returns:</dt>
 							
-								<dd><span class="light fixedFont">{Array}</span> </dd>
+								<dd><span class="light fixedFont">{Array}</span> A new array with each item transformed</dd>
 							
 							</dl>
 						
@@ -1107,11 +1114,11 @@ ul.inheritsList
 					<div class="fixedFont">&lt;static&gt; 
 					
 					<span class="light">{Object}</span>
-					<span class="light">JSV.</span><b>mapObject</b>(obj, func, scope)
+					<span class="light">JSV.</span><b>mapObject</b>(obj, iterator, scope)
 					
 					</div>
 					<div class="description">
-						
+						Returns a new object with each property transformed by the iterator.
 						
 						
 					</div>
@@ -1126,19 +1133,19 @@ ul.inheritsList
 									<span class="light fixedFont">{Object}</span> <b>obj</b>
 									
 								</dt>
-								<dd></dd>
+								<dd>The object to transform</dd>
 							
 								<dt>
-									<span class="light fixedFont">{Function}</span> <b>func</b>
+									<span class="light fixedFont">{Function}</span> <b>iterator</b>
 									
 								</dt>
-								<dd></dd>
+								<dd>A function that returns the new value of the provided property</dd>
 							
 								<dt>
 									<span class="light fixedFont">{Object}</span> <b>scope</b>
-									
+									<i>Optional</i>
 								</dt>
-								<dd></dd>
+								<dd>The value of <code>this</code> in the iterator</dd>
 							
 							</dl>
 						
@@ -1149,7 +1156,7 @@ ul.inheritsList
 							<dl class="detailList">
 							<dt class="heading">Returns:</dt>
 							
-								<dd><span class="light fixedFont">{Object}</span> </dd>
+								<dd><span class="light fixedFont">{Object}</span> A new object with each property transformed</dd>
 							
 							</dl>
 						
@@ -1161,12 +1168,12 @@ ul.inheritsList
 					<a name=".event:mergeSchemas"> </a>
 					<div class="fixedFont">&lt;static&gt; 
 					
-					
+					<span class="light">{Any}</span>
 					<span class="light">JSV.</span><b>mergeSchemas</b>(base, extra, isSchema)
 					
 					</div>
 					<div class="description">
-						
+						Attempts to merge the values of two schemas together. This method aproximately reproduces the results expectedfrom <code>extends</code> in JSON Schema.
 						
 						
 					</div>
@@ -1178,22 +1185,22 @@ ul.inheritsList
 							<dt class="heading">Parameters:</dt>
 							
 								<dt>
-									<b>base</b>
+									<span class="light fixedFont">{Any}</span> <b>base</b>
 									
 								</dt>
-								<dd></dd>
+								<dd>The value to extend</dd>
 							
 								<dt>
-									<b>extra</b>
+									<span class="light fixedFont">{Any}</span> <b>extra</b>
 									
 								</dt>
-								<dd></dd>
+								<dd>The value to extend with</dd>
 							
 								<dt>
 									<span class="light fixedFont">{Boolean}</span> <b>isSchema</b>
 									
 								</dt>
-								<dd></dd>
+								<dd>If the value is a schema</dd>
 							
 							</dl>
 						
@@ -1204,7 +1211,7 @@ ul.inheritsList
 							<dl class="detailList">
 							<dt class="heading">Returns:</dt>
 							
-								<dd>The modified base object</dd>
+								<dd><span class="light fixedFont">{Any}</span> The modified base object</dd>
 							
 							</dl>
 						
@@ -1221,7 +1228,7 @@ ul.inheritsList
 					
 					</div>
 					<div class="description">
-						
+						Mutates the array by pushing the provided value onto the array only if it is not already there.
 						
 						
 					</div>
@@ -1239,7 +1246,7 @@ ul.inheritsList
 								<dd>The array to modify</dd>
 							
 								<dt>
-									<b>o</b>
+									<span class="light fixedFont">{Any}</span> <b>o</b>
 									
 								</dt>
 								<dd>The object to add to the array if it is not already there</dd>
@@ -1270,7 +1277,7 @@ ul.inheritsList
 					
 					</div>
 					<div class="description">
-						
+						Generates a pseudo-random UUID.
 						
 						
 					</div>
@@ -1302,7 +1309,7 @@ ul.inheritsList
 					
 					</div>
 					<div class="description">
-						
+						Returns the first index in the array that the provided item is located at.
 						
 						
 					</div>
@@ -1317,13 +1324,13 @@ ul.inheritsList
 									<span class="light fixedFont">{Array}</span> <b>arr</b>
 									
 								</dt>
-								<dd></dd>
+								<dd>The array to search</dd>
 							
 								<dt>
-									<b>o</b>
+									<span class="light fixedFont">{Any}</span> <b>o</b>
 									
 								</dt>
-								<dd></dd>
+								<dd>The item being searched for</dd>
 							
 							</dl>
 						
@@ -1334,7 +1341,7 @@ ul.inheritsList
 							<dl class="detailList">
 							<dt class="heading">Returns:</dt>
 							
-								<dd><span class="light fixedFont">{Number}</span> </dd>
+								<dd><span class="light fixedFont">{Number}</span> The index of the item in the array, or <code>-1</code> if not found</dd>
 							
 							</dl>
 						
@@ -1351,7 +1358,7 @@ ul.inheritsList
 					
 					</div>
 					<div class="description">
-						
+						Returns an array representation of a value.<ul><li>For array-like objects, the value will be casted as an Array type.</li><li>If an array is provided, the function will simply return the same array.</li><li>For a null or undefined value, the result will be an empty Array.</li><li>For all other values, the value will be the first element in a new Array. </li></ul>
 						
 						
 					</div>
@@ -1363,10 +1370,10 @@ ul.inheritsList
 							<dt class="heading">Parameters:</dt>
 							
 								<dt>
-									<b>o</b>
+									<span class="light fixedFont">{Any}</span> <b>o</b>
 									
 								</dt>
-								<dd></dd>
+								<dd>The value to convert into an array</dd>
 							
 							</dl>
 						
@@ -1377,7 +1384,7 @@ ul.inheritsList
 							<dl class="detailList">
 							<dt class="heading">Returns:</dt>
 							
-								<dd><span class="light fixedFont">{Array}</span> </dd>
+								<dd><span class="light fixedFont">{Array}</span> The value as an array</dd>
 							
 							</dl>
 						
@@ -1394,7 +1401,7 @@ ul.inheritsList
 					
 					</div>
 					<div class="description">
-						
+						Returns the name of the type of the provided value.
 						
 						
 					</div>
@@ -1406,7 +1413,7 @@ ul.inheritsList
 							<dt class="heading">Parameters:</dt>
 							
 								<dt>
-									<b>o</b>
+									<span class="light fixedFont">{Any}</span> <b>o</b>
 									
 								</dt>
 								<dd>The value to determine the type of</dd>
@@ -1438,7 +1445,7 @@ ul.inheritsList
 <!-- ============================== footer ================================= -->
 		<div class="fineprint" style="clear:both">
 			
-			Documentation generated by <a href="http://code.google.com/p/jsdoc-toolkit/" target="_blank">JsDoc Toolkit</a> 2.4.0 on Mon Oct 04 2010 16:58:05 GMT-0600 (MDT)
+			Documentation generated by <a href="http://code.google.com/p/jsdoc-toolkit/" target="_blank">JsDoc Toolkit</a> 2.4.0 on Wed Oct 06 2010 19:11:10 GMT-0600 (MDT)
 		</div>
 	</body>
 </html>

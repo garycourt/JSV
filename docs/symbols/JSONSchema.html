@@ -189,8 +189,6 @@ ul.inheritsList
 <h2>Classes</h2>
 <ul class="classList">
 	
-	<li><i><a href="../symbols/_global_.html">_global_</a></i></li>
-	
 	<li><a href="../symbols/Environment.html">Environment</a></li>
 	
 	<li><a href="../symbols/JSONInstance.html">JSONInstance</a></li>
@@ -200,6 +198,8 @@ ul.inheritsList
 	<li><a href="../symbols/JSV.html">JSV</a></li>
 	
 	<li><a href="../symbols/Report.html">Report</a></li>
+	
+	<li><a href="../symbols/ValidationError.html">ValidationError</a></li>
 	
 </ul>
 <hr />
@@ -242,9 +242,9 @@ ul.inheritsList
 						<td class="attributes">&nbsp;</td>
 						<td class="nameDescription" >
 							<div class="fixedFont">
-								<b><a href="../symbols/JSONSchema.html#constructor">JSONSchema</a></b>()
+								<b><a href="../symbols/JSONSchema.html#constructor">JSONSchema</a></b>(env, json, uri, schema)
 							</div>
-							<div class="description"></div>
+							<div class="description">This class binds a <a href="../symbols/JSONInstance.html">JSONInstance</a> with a <a href="../symbols/JSONSchema.html">JSONSchema</a> to provided context aware methods.</div>
 						</td>
 					</tr>
 				</tbody>
@@ -273,7 +273,7 @@ ul.inheritsList
 							<td class="nameDescription">
 								<div class="fixedFont">JSONSchema.<b><a href="../symbols/JSONSchema.html#.createEmptySchema">createEmptySchema</a></b>(env)
 								</div>
-								<div class="description"></div>
+								<div class="description">Creates an empty schema.</div>
 							</td>
 						</tr>
 					
@@ -282,7 +282,7 @@ ul.inheritsList
 							<td class="nameDescription">
 								<div class="fixedFont"><b><a href="../symbols/JSONSchema.html#getAttribute">getAttribute</a></b>(key, arg)
 								</div>
-								<div class="description"></div>
+								<div class="description">Returns the value of the provided attribute name.</div>
 							</td>
 						</tr>
 					
@@ -291,7 +291,7 @@ ul.inheritsList
 							<td class="nameDescription">
 								<div class="fixedFont"><b><a href="../symbols/JSONSchema.html#getLink">getLink</a></b>(rel, instance)
 								</div>
-								<div class="description"></div>
+								<div class="description">Convenience method for retrieving a link or link object from a schema.</div>
 							</td>
 						</tr>
 					
@@ -300,7 +300,7 @@ ul.inheritsList
 							<td class="nameDescription">
 								<div class="fixedFont"><b><a href="../symbols/JSONSchema.html#getSchema">getSchema</a></b>()
 								</div>
-								<div class="description"></div>
+								<div class="description">Returns the schema of the schema.</div>
 							</td>
 						</tr>
 					
@@ -309,7 +309,7 @@ ul.inheritsList
 							<td class="nameDescription">
 								<div class="fixedFont"><b><a href="../symbols/JSONSchema.html#validate">validate</a></b>(instance, report, parent, parentSchema)
 								</div>
-								<div class="description"></div>
+								<div class="description">Validates the provided instance against the target schema and returns a <a href="../symbols/Report.html">Report</a>.</div>
 							</td>
 						</tr>
 					
@@ -334,17 +334,46 @@ ul.inheritsList
 				</div>
 				
 				<div class="fixedFont">
-						<b>JSONSchema</b>()
+						<b>JSONSchema</b>(env, json, uri, schema)
 				</div>
 				
 				<div class="description">
-					
+					This class binds a <a href="../symbols/JSONInstance.html">JSONInstance</a> with a <a href="../symbols/JSONSchema.html">JSONSchema</a> to provided context aware methods.
 					
 				</div>
 				
 				
 				
 				
+					
+						<dl class="detailList">
+						<dt class="heading">Parameters:</dt>
+						
+							<dt>
+								<span class="light fixedFont">{<a href="../symbols/Environment.html">Environment</a>}</span>  <b>env</b>
+								
+							</dt>
+								<dd>The environment this schema belongs to</dd>
+						
+							<dt>
+								<span class="light fixedFont">{<a href="../symbols/JSONInstance.html">JSONInstance</a>|Any}</span>  <b>json</b>
+								
+							</dt>
+								<dd>The value of the schema</dd>
+						
+							<dt>
+								<span class="light fixedFont">{String}</span>  <b>uri</b>
+								<i>Optional</i>
+							</dt>
+								<dd>The URI of the schema. If undefined, the URI will be a randomly generated UUID.</dd>
+						
+							<dt>
+								<span class="light fixedFont">{<a href="../symbols/JSONSchema.html">JSONSchema</a>|Boolean}</span>  <b>schema</b>
+								<i>Optional</i>
+							</dt>
+								<dd>The schema to bind to the instance. If <code>undefined</code>, the environment's default schema will be used. If <code>true</code>, the instance's schema will be itself.</dd>
+						
+						</dl>
 					
 					
 					
@@ -373,7 +402,7 @@ ul.inheritsList
 					
 					</div>
 					<div class="description">
-						
+						Creates an empty schema.
 						
 						
 					</div>
@@ -388,7 +417,7 @@ ul.inheritsList
 									<span class="light fixedFont">{<a href="../symbols/Environment.html">Environment</a>}</span> <b>env</b>
 									
 								</dt>
-								<dd></dd>
+								<dd>The environment of the schema</dd>
 							
 							</dl>
 						
@@ -399,7 +428,7 @@ ul.inheritsList
 							<dl class="detailList">
 							<dt class="heading">Returns:</dt>
 							
-								<dd><span class="light fixedFont">{<a href="../symbols/JSONSchema.html">JSONSchema</a>}</span> </dd>
+								<dd><span class="light fixedFont">{<a href="../symbols/JSONSchema.html">JSONSchema</a>}</span> The empty schema, who's schema is itself.</dd>
 							
 							</dl>
 						
@@ -411,12 +440,12 @@ ul.inheritsList
 					<a name="getAttribute"> </a>
 					<div class="fixedFont">
 					
-					
+					<span class="light">{<a href="../symbols/JSONSchema.html">JSONSchema</a>|Any}</span>
 					<b>getAttribute</b>(key, arg)
 					
 					</div>
 					<div class="description">
-						
+						Returns the value of the provided attribute name.<p>This method is different from <a href="../symbols/JSONInstance.html#getProperty">JSONInstance#getProperty</a> as the named property is converted using a parser defined by the schema's schema before being returned. Thismakes the return value of this method attribute dependent.</p>
 						
 						
 					</div>
@@ -431,13 +460,13 @@ ul.inheritsList
 									<span class="light fixedFont">{String}</span> <b>key</b>
 									
 								</dt>
-								<dd></dd>
+								<dd>The name of the attribute</dd>
 							
 								<dt>
-									<b>arg</b>
+									<span class="light fixedFont">{Any}</span> <b>arg</b>
 									<i>Optional</i>
 								</dt>
-								<dd></dd>
+								<dd>Some attribute parsers accept special arguments for returning resolved values. This is attribute dependent.</dd>
 							
 							</dl>
 						
@@ -448,7 +477,7 @@ ul.inheritsList
 							<dl class="detailList">
 							<dt class="heading">Returns:</dt>
 							
-								<dd></dd>
+								<dd><span class="light fixedFont">{<a href="../symbols/JSONSchema.html">JSONSchema</a>|Any}</span> The value of the attribute</dd>
 							
 							</dl>
 						
@@ -460,12 +489,12 @@ ul.inheritsList
 					<a name="getLink"> </a>
 					<div class="fixedFont">
 					
-					
+					<span class="light">{String|Object|undefined}</span>
 					<b>getLink</b>(rel, instance)
 					
 					</div>
 					<div class="description">
-						
+						Convenience method for retrieving a link or link object from a schema. This method is the same as calling <code>schema.getAttribute("links", [rel, instance])[0];</code>.
 						
 						
 					</div>
@@ -478,15 +507,15 @@ ul.inheritsList
 							
 								<dt>
 									<span class="light fixedFont">{String}</span> <b>rel</b>
-									<i>Optional</i>
+									
 								</dt>
-								<dd></dd>
+								<dd>The link relationship</dd>
 							
 								<dt>
 									<span class="light fixedFont">{<a href="../symbols/JSONInstance.html">JSONInstance</a>}</span> <b>instance</b>
 									<i>Optional</i>
 								</dt>
-								<dd></dd>
+								<dd>The instance to resolve any URIs from</dd>
 							
 							</dl>
 						
@@ -497,11 +526,18 @@ ul.inheritsList
 							<dl class="detailList">
 							<dt class="heading">Returns:</dt>
 							
-								<dd></dd>
+								<dd><span class="light fixedFont">{String|Object|undefined}</span> If <code>instance</code> is provided, a string containing the resolve URI of the link is returned.  If <code>instance</code> is not provided, a link object is returned with details of the link.  If no link with the provided relationship exists, <code>undefined</code> is returned.</dd>
 							
 							</dl>
 						
 						
+						
+							<dl class="detailList">
+							<dt class="heading">See:</dt>
+							
+								<dd><a href="../symbols/JSONSchema.html#getAttribute">JSONSchema#getAttribute</a></dd>
+							
+							</dl>
 						
 
 					<hr />
@@ -514,7 +550,7 @@ ul.inheritsList
 					
 					</div>
 					<div class="description">
-						
+						Returns the schema of the schema.
 						
 						
 					</div>
@@ -529,7 +565,7 @@ ul.inheritsList
 							<dl class="detailList">
 							<dt class="heading">Returns:</dt>
 							
-								<dd><span class="light fixedFont">{<a href="../symbols/JSONSchema.html">JSONSchema</a>}</span> </dd>
+								<dd><span class="light fixedFont">{<a href="../symbols/JSONSchema.html">JSONSchema</a>}</span> The schema of the schema</dd>
 							
 							</dl>
 						
@@ -546,7 +582,7 @@ ul.inheritsList
 					
 					</div>
 					<div class="description">
-						
+						Validates the provided instance against the target schema and returns a <a href="../symbols/Report.html">Report</a>.
 						
 						
 					</div>
@@ -558,28 +594,28 @@ ul.inheritsList
 							<dt class="heading">Parameters:</dt>
 							
 								<dt>
-									<b>instance</b>
+									<span class="light fixedFont">{<a href="../symbols/JSONInstance.html">JSONInstance</a>|Any}</span> <b>instance</b>
 									
 								</dt>
-								<dd></dd>
+								<dd>The instance to validate; may be a <a href="../symbols/JSONInstance.html">JSONInstance</a> or any JavaScript value</dd>
 							
 								<dt>
 									<span class="light fixedFont">{<a href="../symbols/Report.html">Report</a>}</span> <b>report</b>
 									<i>Optional</i>
 								</dt>
-								<dd></dd>
+								<dd>A <a href="../symbols/Report.html">Report</a> to concatenate the result of the validation to. If <code>undefined</code>, a new <a href="../symbols/Report.html">Report</a> is created.</dd>
 							
 								<dt>
 									<span class="light fixedFont">{<a href="../symbols/JSONInstance.html">JSONInstance</a>}</span> <b>parent</b>
 									<i>Optional</i>
 								</dt>
-								<dd></dd>
+								<dd>The parent/containing instance of the provided instance</dd>
 							
 								<dt>
 									<span class="light fixedFont">{<a href="../symbols/JSONSchema.html">JSONSchema</a>}</span> <b>parentSchema</b>
 									<i>Optional</i>
 								</dt>
-								<dd></dd>
+								<dd>The schema of the parent/containing instance</dd>
 							
 							</dl>
 						
@@ -590,7 +626,7 @@ ul.inheritsList
 							<dl class="detailList">
 							<dt class="heading">Returns:</dt>
 							
-								<dd><span class="light fixedFont">{<a href="../symbols/Report.html">Report</a>}</span> </dd>
+								<dd><span class="light fixedFont">{<a href="../symbols/Report.html">Report</a>}</span> The result of the validation</dd>
 							
 							</dl>
 						
@@ -611,7 +647,7 @@ ul.inheritsList
 <!-- ============================== footer ================================= -->
 		<div class="fineprint" style="clear:both">
 			
-			Documentation generated by <a href="http://code.google.com/p/jsdoc-toolkit/" target="_blank">JsDoc Toolkit</a> 2.4.0 on Mon Oct 04 2010 16:58:05 GMT-0600 (MDT)
+			Documentation generated by <a href="http://code.google.com/p/jsdoc-toolkit/" target="_blank">JsDoc Toolkit</a> 2.4.0 on Wed Oct 06 2010 19:11:10 GMT-0600 (MDT)
 		</div>
 	</body>
 </html>

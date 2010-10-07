@@ -143,7 +143,7 @@ There are many more APIs available for JSV, too many to detail here. The complet
 
 JSV provides an API for extending available schemas, adding new attributes and validation to currently existing schemas, and creating whole new Environments with unique behaviors. 
 In fact, in the [eat-your-own-dog-food](http://en.wikipedia.org/wiki/Eating_your_own_dog_food) approach, all the default JSON Schema environments available are implemented using this API. 
-You can find instructions and details on how this works in *&lt;insert file path here&gt;*.
+Details and instruction on this feature will be provided at a later date.
 
 ## Unit Tests
 
