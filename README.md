@@ -79,6 +79,8 @@ When creating an environment, you can optionally specify how you want that envir
 *	`json-schema-draft-01`
 
 	A complete implementation of the [first revision](http://tools.ietf.org/html/draft-zyp-json-schema-01) of the JSON Schema specification, which is exactly the same as the [original draft](http://tools.ietf.org/html/draft-zyp-json-schema-00).
+	
+	Users with JSON Schemas written for JSV < v2.1 should use this environment for it's dot-delimited fragment identifiers.
 
 Environments can also be customized and registered for multiple reuse. (See the section on *Extending Environments* below)
 
