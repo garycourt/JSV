@@ -63,6 +63,6 @@
 		}
 	],
 	
-	"fragmentResolution" : "dot-delimited",
+	"fragmentResolution" : "slash-delimited",
 	"extends" : {"$ref" : "http://json-schema.org/schema#"}
 }

@@ -10,7 +10,6 @@
 				"type" : ["string", {"$ref" : "#"}]
 			},
 			"optional" : true,
-			"uniqueItems" : true,
 			"default" : "any"
 		},
 		
@@ -78,13 +77,8 @@
 		
 		"maxItems" : {
 			"type" : "integer",
-			"optional" : true
-		},
-		
-		"uniqueItems" : {
-			"type" : "boolean",
 			"optional" : true,
-			"default" : false
+			"minimum" : 0
 		},
 		
 		"pattern" : {
@@ -108,8 +102,7 @@
 		"enum" : {
 			"type" : "array",
 			"optional" : true,
-			"minItems" : 1,
-			"uniqueItems" : true
+			"minItems" : 1
 		},
 		
 		"title" : {
@@ -137,19 +130,16 @@
 			"optional" : true
 		},
 		
-		"divisibleBy" : {
-			"type" : "number",
-			"minimum" : 0,
-			"minimumCanEqual" : false,
+		"maxDecimal" : {
+			"type" : "integer",
 			"optional" : true,
-			"default" : 1
+			"minimum" : 0
 		},
 		
 		"disallow" : {
 			"type" : ["string", "array"],
 			"items" : {"type" : "string"},
-			"optional" : true,
-			"uniqueItems" : true
+			"optional" : true
 		},
 		
 		"extends" : {
