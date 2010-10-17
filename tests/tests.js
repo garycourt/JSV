@@ -1,5 +1,4 @@
-var JSV = require('./jsv').JSV,
-	env,
+var env,
 	ENVIRONMENTS = [
 		"json-schema-draft-01",
 		"json-schema-draft-02"
@@ -38,6 +37,7 @@ module(ENVIRONMENTS[curEnvId]);
 
 (function (id) {
 test("Acquire Validator", function () {
+	JSV = require('../lib/jsv').JSV;
 	env = null;
 	
 	ok(JSV, "JSV is loaded");
@@ -365,9 +365,9 @@ test("Complex Examples", function () {
 	   "id":"Common#",
 	   "type":"object",
 	   "properties":{
-	       "!":{"type":"string","enum":["Common"]},
+	       "!":{"type":"string","enum":["Common"]}
 	   },
-	   "additionalProperties":false,
+	   "additionalProperties":false
 	}, undefined, "Common#");
 	
 	var report = env.validate({
@@ -393,20 +393,20 @@ test("Complex Examples", function () {
 		                       "properties":{
 		                           "!":{"type":"string","enum":["Music"]},
 		                           "common":{"$ref":"Common#"}
-		                       },
+		                       }
 		                   },
 		                   {
 		                       "type":"object",
 		                       "properties":{
 		                           "!":{"type":"string","enum":["Text"]},
 		                           "common":{"$ref":"Common#"}
-		                       },
+		                       }
 		                   }
 		               ]
 		           }
 		       },
 		
-		       "common":{"$ref":"Common#"},
+		       "common":{"$ref":"Common#"}
 		   }
 		}
 	);
