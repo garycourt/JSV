@@ -1,6 +1,6 @@
 {
 	"name" : "JSV",
-	"version" : "3.0",
+	"version" : "3.0.1",
 	"description" : "A JavaScript implementation of a extendable, fully compliant JSON Schema validator.",
 	"homepage" : "http://github.com/garycourt/JSV",
 	"author" : "Gary Court <gary.court@gmail.com>",
