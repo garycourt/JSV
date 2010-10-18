@@ -1,3 +1,0 @@
-[submodule "lib/uri"]
-	path = lib/uri
-	url = git://github.com/garycourt/uri-js.git
