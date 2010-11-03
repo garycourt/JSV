@@ -5,7 +5,7 @@ var env,
 	],
 	curEnvId;
 
-//calls o(true) if no error is thrown
+//calls ok(true) if no error is thrown
 function okNoError(func, msg) {
 	try {
 		func();
