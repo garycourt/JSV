@@ -332,7 +332,6 @@ test("Links Validation", function () {
 	
 	//describedby
 	schema = env.createSchema({ "id" : "http://test.example.com/3", "properties" : { "test" : { "type" : "object" } }, "extends" : { "$ref" : "http://json-schema.org/hyper-schema" } }, null, "http://test.example.com/3");
-	schema = env.createSchema({ "$schema" : "http://test.example.com/3", "test" : {} });
 	equal(env.validate({}, { "$schema" : "http://test.example.com/3", "test" : {} }).errors.length, 0);
 	notEqual(env.validate({}, { "$schema" : "http://test.example.com/3", "test" : 0 }).errors.length, 0);
 	
