@@ -264,7 +264,7 @@ test("MinimumCanEqual/MaximumCanEqual Validation", function () {
 });
 
 if (curDraftId > 2) {
-test("ExclusiveMinimum/exclusiveMaximum Validation", function () {
+test("ExclusiveMinimum/ExclusiveMaximum Validation", function () {
 	//true
 	notEqual(env.validate(0, { exclusiveMinimum : false, exclusiveMaximum : false }).errors.length, 0);  //illegal
 	equal(env.validate(1, { minimum : 1, maximum : 10, exclusiveMinimum : false, exclusiveMaximum : false }).errors.length, 0);

@@ -67,14 +67,29 @@ There is no one way to validate JSON, just like there is no one way to validate 
 
 When creating an environment, you can optionally specify how you want that environment to behave. For example, this allows you to specify which version of the JSON Schema you would like the environment to behave like. JSV already provides the following environments:
 
+*	`json-schema-draft-03`
+
+	A complete implementation of the [third revision](http://tools.ietf.org/html/draft-zyp-json-schema-03) of the JSON Schema specification. This is the same as the second revision, except:
+	
+	*	"optional" has been replaced by "required"
+	*	"requires" has been replaced by "dependencies"
+	*	"minimumCanEqual"/"maximumCanEqual" has been replaced by "exclusiveMinimum"/"exclusiveMaximum"
+	*	"self"/"full"/"describedby" links have been moved to the core schema, and are provided by "id"/"$ref"/"$schema"
+	*	Adds the attributes "patternSchema" and "additionalItems"
+	*	Deprecates the attributes "root" and "alternate"
+	*	Schemas are now versioned under the URIs "http://json-schema.org/draft-XX/", where XX is the draft number
+	
+	In addition to this, all schemas from the previous versions of the JSON Schema draft are included in this environment, and are backwards compatible (where possible) with it's previous version.
+	This backwards compatibility can be disabled with the new environment option "strict" is set to `true`.
+	
+	This is currently the default environment.
+
 *	`json-schema-draft-02`
 
 	A complete implementation of the [second revision](http://tools.ietf.org/html/draft-zyp-json-schema-02) of the JSON Schema specification. This is the same as the first revision, except adds:
 	
 	*	"targetSchema" attribute
 	*	slash-delimited fragment identifiers, which is now the default behavior
-	
-	This is currently the default environment.
 	
 *	`json-schema-draft-01`
 
@@ -149,7 +164,7 @@ Details and instruction on this feature will be provided at a later date.
 
 ## Unit Tests
 
-Open `tests/index.html` in your web browser to run the unit tests.
+Open `tests/index.html` and `tests/index3.html` in your web browser to run the unit tests.
 
 ## License
 
