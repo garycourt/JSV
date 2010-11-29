@@ -339,6 +339,11 @@ test("Links Validation", function () {
 	schema = env.createSchema({ "properties" : { "two" : { "id" : "http://test.example.com/2", "type" : "object" } } }, null, "http://not.example.com/2");
 	equal(env.validate({}, { "$ref" : "http://test.example.com/2" }).errors.length, 0);
 	notEqual(env.validate(null, { "$ref" : "http://test.example.com/2" }).errors.length, 0);
+	
+	//links api
+	schema = env.createSchema({ "links" : [ { "rel" : "bar", "href" : "http:{-this}#" } ] });
+	instance = env.createInstance("foo");
+	equal(schema.getLink("bar", instance), "http:foo#", "'bar' link and self reference");
 });
 
 test("PathStart Validation", function () {

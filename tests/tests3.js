@@ -425,8 +425,9 @@ test("JSON Schema Validation", function () {
 	equal(hyperSchema.validate(links).errors.length, 0, "hyperSchema.validate(links)");
 });
 
+(function(curDraftId){
 test("Links Validation", function () {
-	var schema;
+	var schema, instance;
 	//full
 	equal(env.validate({ 'a' : {} }, { 'type' : 'object', 'additionalProperties' : { '$ref' : '#' } }).errors.length, 0);
 	notEqual(env.validate({ 'a' : 1 }, { 'type' : 'object', 'additionalProperties' : { '$ref' : '#' } }).errors.length, 0);
@@ -440,7 +441,13 @@ test("Links Validation", function () {
 	schema = env.createSchema({ "properties" : { "two" : { "id" : "http://test.example.com/2", "type" : "object" } } }, null, "http://not.example.com/2");
 	equal(env.validate({}, { "$ref" : "http://test.example.com/2" }).errors.length, 0);
 	notEqual(env.validate(null, { "$ref" : "http://test.example.com/2" }).errors.length, 0);
+	
+	//links api
+	schema = env.createSchema({ "links" : [ { "rel" : "bar", "href" : "http:" + (curDraftId < 3 ? "{-this}" : "{@}") + "#" } ] });
+	instance = env.createInstance("foo");
+	equal(schema.getLink("bar", instance), "http:foo#", "'bar' link and self reference");
 });
+}(curDraftId));
 
 test("PathStart Validation", function () {
 	var instance = env.createInstance({}, "http://test.example.com/4"),
