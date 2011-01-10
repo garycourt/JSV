@@ -243,10 +243,12 @@ test("Enum Validation", function () {
 	equal(env.validate(true, { 'enum' : [false, true] }).errors.length, 0);
 	equal(env.validate(2, { 'enum' : [1, 2, 3] }).errors.length, 0);
 	equal(env.validate('a', { 'enum' : ['a'] }).errors.length, 0);
+	equal(env.validate({}, { 'properties' : { 'a' : { 'enum' : ['a'], 'optional' : true } } }).errors.length, 0);
 	
 	notEqual(env.validate(true, { 'enum' : ['false', 'true'] }).errors.length, 0);
 	notEqual(env.validate(4, { 'enum' : [1, 2, 3, '4'] }).errors.length, 0);
 	notEqual(env.validate('', { 'enum' : [] }).errors.length, 0);
+	notEqual(env.validate({}, { 'properties' : { 'a' : { 'enum' : ['a'] } } }).errors.length, 0);
 });
 
 test("Format Validation", function () {
