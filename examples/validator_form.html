@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="ISO-8859-1"?> 
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"> 
+ 
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en"> 
+  <head>
+    <title>JSV Validator Form</title>
+    <script type="text/javascript" src="../lib/uri/uri.js"></script>
+    <script type="text/javascript" src="../lib/jsv.js"></script>
+    <script type="text/javascript" src="../lib/json-schema-draft-01.js"></script>
+    <script type="text/javascript" src="../lib/json-schema-draft-02.js"></script>
+    <script type="text/javascript" src="../lib/json-schema-draft-03.js"></script>
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js"></script>
+    <script type="text/javascript" src="validator_form.js"></script>
+
+    <style type="text/css">
+      textarea {
+        height: 400px;
+        width: 400px;
+      }
+      #schema_div {
+        float: left;
+      }
+      #json_source_div {
+        float: left;
+        padding-left: 10px;
+      }
+      #validation_result {
+        clear: left;
+      }
+    </style>
+  </head>
+  <body>
+    <div>
+      <form>
+        <div id="schema_div">
+          <h2>JSON Schema</h2>
+          <textarea id="schema"></textarea>
+        </div>
+        <div id="json_source_div">
+          <h2>JSON Source</h2>
+          <textarea id="json_source"></textarea>
+        </div>
+        <div id="validation_result"></div>
+        <div>
+          <input type="submit" id="validate_button" />
+        </div>
+      </form>
+    </div>
+  </body>
+<html>
