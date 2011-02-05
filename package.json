@@ -26,7 +26,7 @@
 			"url" : "git://github.com/garycourt/JSV.git"
 		}
 	],
-	"dependencies" : {},
+	"dependencies" : [],
 	"main" : "lib/jsv.js",
 	"keywords" : ["json", "schema", "validator"]
 }
