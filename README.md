@@ -80,7 +80,10 @@ When creating an environment, you can optionally specify how you want that envir
 	*	Schemas are now versioned under the URIs "http://json-schema.org/draft-XX/", where XX is the draft number
 	
 	In addition to this, all schemas from the previous versions of the JSON Schema draft are included in this environment, and are backwards compatible (where possible) with it's previous version.
-	This backwards compatibility can be disabled with the new environment option "strict" is set to `true`.
+	This backwards compatibility can be disabled with the environment option `strict` is set to `true`.
+	
+	This environment will also validate links/references to other schemas, and will throw an error if a referenced schema has not already been registered with the environment. 
+	This feature can be disabled with the environment option `validateReferences` is set to `false`.
 	
 	This is currently the default environment.
 

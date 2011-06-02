@@ -13,7 +13,7 @@ function okNoError(func, msg) {
 		func();
 		ok(true, msg);
 	} catch (e) {
-		ok(false, msg + ': ' + e);
+		ok(false, msg + ': ' + JSON.stringify(e));
 	}
 }
 
@@ -23,7 +23,7 @@ function okError(func, msg) {
 		func();
 		ok(false, msg);
 	} catch (e) {
-		ok(true, msg + ': ' + e);
+		ok(true, msg + ': ' + JSON.stringify(e));
 	}
 }
 
@@ -435,19 +435,30 @@ test("Links Validation", function () {
 	notEqual(env.validate({ 'a' : 1 }, { 'type' : 'object', 'additionalProperties' : { '$ref' : '#' } }).errors.length, 0);
 	
 	//describedby
-	schema = env.createSchema({ "id" : "http://test.example.com/3", "properties" : { "test" : { "type" : "object" } }, "extends" : { "$ref" : env.getOption("latestJSONSchemaHyperSchemaURI") } }, null, "http://test.example.com/3");
-	equal(env.validate({}, { "$schema" : "http://test.example.com/3", "test" : {} }).errors.length, 0);
-	notEqual(env.validate({}, { "$schema" : "http://test.example.com/3", "test" : 0 }).errors.length, 0);
+	okNoError(function () {
+		schema = env.createSchema({ "id" : "http://test.example.com/3", "properties" : { "test" : { "type" : "object" } }, "extends" : { "$ref" : "http://json-schema.org/draft-03/schema#" } }, null, "http://test.example.com/3");
+		equal(env.validate({}, { "$schema" : "http://test.example.com/3", "test" : {} }).errors.length, 0);
+		notEqual(env.validate({}, { "$schema" : "http://test.example.com/3", "test" : 0 }).errors.length, 0);
+	}, "describedby schema");
 	
 	//self
-	schema = env.createSchema({ "properties" : { "two" : { "id" : "http://test.example.com/2", "type" : "object" } } }, null, "http://not.example.com/2");
-	equal(env.validate({}, { "$ref" : "http://test.example.com/2" }).errors.length, 0);
-	notEqual(env.validate(null, { "$ref" : "http://test.example.com/2" }).errors.length, 0);
+	okNoError(function () {
+		schema = env.createSchema({ "properties" : { "two" : { "id" : "http://test.example.com/2", "type" : "object" } } }, null, "http://not.example.com/2");
+		equal(env.validate({}, { "$ref" : "http://test.example.com/2" }).errors.length, 0);
+		notEqual(env.validate(null, { "$ref" : "http://test.example.com/2" }).errors.length, 0);
+	}, "self schema");
 	
 	//links api
-	schema = env.createSchema({ "links" : [ { "rel" : "bar", "href" : "http:" + (curDraftId < 3 ? "{-this}" : "{@}") + "#" } ] });
-	instance = env.createInstance("foo");
-	equal(schema.getLink("bar", instance), "http:foo#", "'bar' link and self reference");
+	okNoError(function () {
+		schema = env.createSchema({ "links" : [ { "rel" : "bar", "href" : "http:" + (curDraftId < 3 ? "{-this}" : "{@}") + "#" } ] });
+		instance = env.createInstance("foo");
+		equal(schema.getLink("bar", instance), "http:foo#", "'bar' link and self reference");
+	}, "links api schema");
+	
+	//invalid reference
+	(env.getOption("validateReferences") ? okError : okNoError)(function () {
+		schema = env.createSchema({ "$ref" : "asdf:qwerty" });  //should throw error
+	}, "invalid reference");
 });
 }(curDraftId));
 
@@ -470,6 +481,7 @@ test("Register Schemas", function () {
 });
 
 test("Complex Examples", function () {
+	//example 1
 	env.createSchema({
 	   "id":"Common#",
 	   "type":"object",
