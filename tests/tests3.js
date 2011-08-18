@@ -456,7 +456,7 @@ test("Links Validation", function () {
 	}, "links api schema");
 	
 	//invalid reference
-	(env.getOption("validateReferences") ? okError : okNoError)(function () {
+	(env.getOption("enforceReferences") ? okError : okNoError)(function () {
 		schema = env.createSchema({ "$ref" : "asdf:qwerty" });  //should throw error
 	}, "invalid reference");
 });
