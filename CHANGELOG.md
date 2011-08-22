@@ -1,5 +1,13 @@
 # Changelog
 
+## 4.0 (2011/08/22)
+
+*	Added referencing to JSONSchema, allows for soft-linking to other schemas.
+*	Fixed typo in JSV.clone.
+*	Fixed typo in draft-03 hyper-schema.json.
+*	Updated uri.js to latest version.
+*	Fixed bug with Report#addError. (Identified by cellog)
+
 ## 3.5 (2011/03/07)
 
 *	Links to unregistered schemas will now throw an error. This can be disabled by setting the environment option "validateReferences" to false.
