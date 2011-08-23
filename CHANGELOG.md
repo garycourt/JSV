@@ -3,6 +3,9 @@
 ## 4.0 (2011/08/22)
 
 *	Added referencing to JSONSchema, allows for soft-linking to other schemas.
+*	Environment option "validateReferences" now validates references at validation time for any environment.
+*	Environment option "enforceReferences" will cause invalid references to throw an error at creation time for any environment.
+*	Fixed floating point errors with "divisibleBy" attribute.
 *	Fixed typo in JSV.clone.
 *	Fixed typo in draft-03 hyper-schema.json.
 *	Updated uri.js to latest version.

@@ -9,7 +9,7 @@ JSV is a JavaScript implementation of a extendable, fully compliant JSON Schema 
 *	Provides an intuitive API for creating new validating schema attributes, or whole new custom schema schemas.
 *	Supports `self`, `full` and `describedby` hyper links.
 *	Validates itself, and is bootstrapped from the JSON Schema schemas.
-*	Includes over 170 unit tests for testing all parts of the specifications.
+*	Includes over 1100 unit tests for testing all parts of the specifications.
 *	Works in all ECMAScript 3 environments, including all web browsers and Node.js.
 *	Licensed under the FreeBSD License, a very open license.
 

@@ -378,6 +378,7 @@ test("DivisibleBy Validation", function () {
 	equal(env.validate(0, { divisibleBy : 2.5 }).errors.length, 0);
 	equal(env.validate(5, { divisibleBy : 2.5 }).errors.length, 0);
 	equal(env.validate(7.5, { divisibleBy : 2.5 }).errors.length, 0);
+	equal(env.validate(9.1, { divisibleBy : 1.3 }).errors.length, 0);
 	
 	notEqual(env.validate(0, { divisibleBy : 0 }).errors.length, 0);
 	notEqual(env.validate(7, { divisibleBy : 5 }).errors.length, 0);
