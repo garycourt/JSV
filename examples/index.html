@@ -40,14 +40,21 @@ body{font-size:16px;-webkit-text-size-adjust:none}
 
 /* Styles */
 
+.container { padding-bottom: 20px; font-family: sans-serif; } 
 .row { margin-top: 20px; }
 legend { font-weight: bold; font-size: 125%; }
 label {	display: block; font-weight: bold; }
 .value_label { display: none; }
-.value { height: 360px; }
+.value { height: 360px; font-size: 12px; tab-size: 4; }
 .value, .uri { width: 100%; }
-.value, .uri, #report { font-family: Consolas, Menlo, Monaco, Lucida Console, Liberation Mono, DejaVu Sans Mono, Bitstream Vera Sans Mono, Courier New, monospace, serif; }
-#report { padding: 10px; white-space: pre-wrap; }
+.value, .uri, .error code { font-family: Consolas, Menlo, Monaco, Lucida Console, Liberation Mono, DejaVu Sans Mono, Bitstream Vera Sans Mono, Courier New, monospace, serif; }
+.error { margin: 20px 0; font-size: 12px; }
+.error:first-child { margin-top: 0; }
+.error:last-child { margin-bottom: 0; }
+.error_message { font-weight: bold; }
+.error_schemaUri { margin-left: 15px; }
+.error_attribute { margin-left: 15px; }
+#report { padding: 20px; }
 #report.valid { border: 1px solid #0f0; background-color: #efe; }
 #report.invalid { border: 1px solid #f00; background-color: #fee; }
 
@@ -78,7 +85,7 @@ label {	display: block; font-weight: bold; }
 				<fieldset id="json_properties">
 					<legend>Input</legend>
 					<label id="json_label" class="value_label" for="json">Value</label>
-					<textarea id="json" class="value" name="json"></textarea>
+					<textarea id="json" class="value" name="json" wrap="off"></textarea>
 					<label id="json_uri_label" class="uri_label" for="json_uri">URI</label>
 					<input id="json_uri" class="uri" type="text" name="json_uri" value="json">
 				</fieldset>
@@ -88,7 +95,7 @@ label {	display: block; font-weight: bold; }
 				<fieldset id="schema_properties">
 					<legend>Schema</legend>
 					<label id="schema_label" class="value_label" for="schema">Value</label>
-					<textarea id="schema" class="value" name="schema"></textarea>
+					<textarea id="schema" class="value" name="schema" wrap="off"></textarea>
 					<label id="schema_uri_label" class="uri_label" for="schema_uri">URI</label>
 					<input id="schema_uri" class="uri" type="text" name="schema_uri" value="schema">
 				</fieldset>
@@ -214,14 +221,23 @@ window.addEventListener("load", function (event) {
 				reportElement.className = "invalid";
 				output = "";
 				for (var x = 0, xl = report.errors.length; x < xl; ++x) {
-					output += JSON.stringify(report.errors[x]) + "\n";
+					output += '<div class="error"><span class="error_uri">Problem with <code>' +
+						report.errors[x].uri +
+						'</code> : </span><span class="error_message">' +
+						report.errors[x].message +
+						'</span><br/><span class="error_schemaUri">Reported by <code>' +
+						report.errors[x].schemaUri +
+						'</code></span><br/><span class="error_attribute">Attribute "<code>' +
+						report.errors[x].attribute + 
+						'</code>"</span><span class="error_details"> (<code>' +
+						JSON.stringify(report.errors[x].details) +
+						'</code>)</span></div>';
 				}
+				reportElement.innerHTML = output;
 			} else {
 				reportElement.className = "valid";
-				output = "Input is valid!";
+				reportElement.textContent = "Input is valid!";
 			}
-			
-			reportElement.textContent = output;
 		} catch (e) {
 			var reportElement = document.getElementById("report");
 			reportElement.className = "invalid";
@@ -234,10 +250,10 @@ window.addEventListener("load", function (event) {
 });
 
 	</script>
-    <script type="text/javascript" src="lib/uri/uri.js"></script>
-    <script type="text/javascript" src="lib/jsv.js"></script>
-    <script type="text/javascript" src="lib/json-schema-draft-03.js"></script>
-    <script type="text/javascript" src="lib/json-schema-draft-02.js"></script>
-    <script type="text/javascript" src="lib/json-schema-draft-01.js"></script>
+    <script type="text/javascript" src="../lib/uri/uri.js"></script>
+    <script type="text/javascript" src="../lib/jsv.js"></script>
+    <script type="text/javascript" src="../lib/json-schema-draft-03.js"></script>
+    <script type="text/javascript" src="../lib/json-schema-draft-02.js"></script>
+    <script type="text/javascript" src="../lib/json-schema-draft-01.js"></script>
 </body>
 </html>

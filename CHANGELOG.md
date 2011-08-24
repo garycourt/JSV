@@ -10,6 +10,7 @@
 *	Fixed typo in draft-03 hyper-schema.json.
 *	Updated uri.js to latest version.
 *	Fixed bug with Report#addError. (Identified by cellog)
+*	ValidationError#details is now safe to stringify.
 *	Added example HTML page
 
 ## 3.5 (2011/03/07)
