@@ -1,6 +1,6 @@
 # Changelog
 
-## 4.0 (2011/08/22)
+## 4.0 (2011/08/23)
 
 *	Added referencing to JSONSchema, allows for soft-linking to other schemas.
 *	Environment option "validateReferences" now validates references at validation time for any environment.
@@ -10,6 +10,7 @@
 *	Fixed typo in draft-03 hyper-schema.json.
 *	Updated uri.js to latest version.
 *	Fixed bug with Report#addError. (Identified by cellog)
+*	Added example HTML page
 
 ## 3.5 (2011/03/07)
 
