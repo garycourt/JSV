@@ -11,7 +11,8 @@
 *	Updated uri.js to latest version.
 *	Fixed bug with Report#addError. (Identified by cellog)
 *	ValidationError#details is now safe to stringify.
-*	Added example HTML page
+*	Removed JSONSchema#createEmptySchema. All empty schemas created by Environment#createEmptySchema now have the same URI (urn:jsv:empty-schema#).
+*	Added example HTML page.
 
 ## 3.5 (2011/03/07)
 
