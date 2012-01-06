@@ -322,9 +322,11 @@ test("UniqueItems Validation", function () {
 test("Pattern Validation", function () {
 	equal(env.validate('', {}).errors.length, 0);
 	equal(env.validate('', { pattern : '^$' }).errors.length, 0);
+	equal(env.validate('', { pattern : /^$/ }).errors.length, 0);
 	equal(env.validate('today', { pattern : 'day' }).errors.length, 0);
 	
 	notEqual(env.validate('', { pattern : '^ $' }).errors.length, 0);
+	notEqual(env.validate('', { pattern : /^ $/ }).errors.length, 0);
 	notEqual(env.validate('today', { pattern : 'dam' }).errors.length, 0);
 	notEqual(env.validate('aaaaa', { pattern : 'aa(a' }).errors.length, 0);
 });
