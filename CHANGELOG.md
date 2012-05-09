@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.0.1 (2012/05/09)
+
+*	Fixed bug with extended schemas that contain a "pattern" attribute. (Identified by DrDyne)
+
 ## 4.0 (2011/08/23)
 
 *	Added referencing to JSONSchema, allows for soft-linking to other schemas.

@@ -483,7 +483,7 @@ test("Register Schemas", function () {
 
 test("Complex Examples", function () {
 	//example 1
-	env.createSchema({
+	var schema = env.createSchema({
 	   "id":"Common#",
 	   "type":"object",
 	   "properties":{
@@ -533,7 +533,35 @@ test("Complex Examples", function () {
 		}
 	);
 	
-	notEqual(report.errors.length, 0);
+	notEqual(report.errors.length, 0, "example 1");
+	
+	//example 2
+	schema = env.createSchema({
+	    "extends": {
+	        "type": "object",
+	        "properties": {
+	            "id": {
+	                "type": "string",
+	                "minLength": 1,
+	                "pattern": "^\\S.+\\S$"
+	            }
+	        }
+	    },
+	    "properties": {
+	        "role": {
+	            "extends": {
+	                "type": "string",
+	                "minLength": 1,
+	                "pattern": "^\\S.+\\S$"
+	            },
+	            "description": "some description"
+	        }
+	    }
+	});
+	
+	report = env.validate({ "id" : "some id", "role" : "yunowork?"}, schema);
+	
+	equal(report.errors.length, 0, "example 2");
 });
 
 }

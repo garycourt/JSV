@@ -162,10 +162,50 @@ JSV provides an API for extending available schemas, adding new attributes and v
 In fact, in the [eat-your-own-dog-food](http://en.wikipedia.org/wiki/Eating_your_own_dog_food) approach, all the default JSON Schema environments available are implemented using this API. 
 Details and instruction on this feature will be provided at a later date.
 
+## Installation
+
+The preferred method of installation is to download the latest copy from GitHub:
+
+	git clone git://github.com/garycourt/JSV.git
+
+If you are using JSV within Node.js, you can quickly install it using:
+
+	npm install JSV
+
+Then you can reference it within your application using:
+
+	var JSV = require("JSV").JSV;
+
 ## Unit Tests
 
 Open `tests/index.html` and `tests/index3.html` in your web browser to run the unit tests.
 
+Currently, the unit tests can not be run in Node.js.
+
 ## License
 
-JSV is licensed under the FreeBSD License. 
+	Copyright 2010 Gary Court. All rights reserved.
+	
+	Redistribution and use in source and binary forms, with or without modification, are
+	permitted provided that the following conditions are met:
+	
+	   1. Redistributions of source code must retain the above copyright notice, this list of
+	      conditions and the following disclaimer.
+	
+	   2. Redistributions in binary form must reproduce the above copyright notice, this list
+	      of conditions and the following disclaimer in the documentation and/or other materials
+	      provided with the distribution.
+	
+	THIS SOFTWARE IS PROVIDED BY GARY COURT ``AS IS'' AND ANY EXPRESS OR IMPLIED
+	WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+	FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL GARY COURT OR
+	CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+	CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+	SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+	ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+	NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+	ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+	
+	The views and conclusions contained in the software and documentation are those of the
+	authors and should not be interpreted as representing official policies, either expressed
+	or implied, of Gary Court or the JSON Schema specification.
