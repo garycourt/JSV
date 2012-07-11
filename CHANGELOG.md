@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.0.2 (2012/07/11)
+
+*	Replace "then" with correct "than" in all error messages. (Identified by stefanw)
+
 ## 4.0.1 (2012/05/09)
 
 *	Fixed bug with extended schemas that contain a "pattern" attribute. (Identified by DrDyne)
