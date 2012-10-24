@@ -28,5 +28,6 @@
 	],
 	"dependencies" : [],
 	"main" : "lib/jsv.js",
-	"keywords" : ["json", "schema", "validator"]
+	"keywords" : ["json", "schema", "validator"],
+	"bin": "examples/JSV.js"
 }
