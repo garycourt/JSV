@@ -1,5 +1,6 @@
+#!/usr/bin/env node
 var fs = require("fs");
-var JSV = require("../lib/jsv.js").JSV;
+var JSV = require("jsv").JSV;
 
 var env = JSV.createEnvironment();
 var baseURI = "schema";
