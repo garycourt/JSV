@@ -585,20 +585,30 @@ test("Type Coercion Option", function () {
 	var obj = {
 		booleanProp: "true",
 		numberProp: "-123.456",
-		integerProp: "789"
+		subObject: {
+			integerProp: "789"
+		}
 	};
 	var schema = {
 		type: "object",
 		properties: {
 			"booleanProp": {type: "boolean"},
 			"numberProp": {type: "number"},
-			"integerProp": {type: "integer"}
+			"subObject": {
+				type: "object",
+				properties: {
+					"integerProp": {type: "integer"}
+				}
+			}
 		}
 	};
 	equal(envWithTypeCoercion.validate(obj, schema).errors.length, 0);
 	equal(obj.booleanProp, true);
+	equal(typeof obj.booleanProp, "boolean");
 	equal(obj.numberProp, -123.456);
-	equal(obj.integerProp, 789);
+	equal(typeof obj.numberProp, "number");
+	equal(obj.subObject.integerProp, 789);
+	equal(typeof obj.subObject.integerProp, "number");
 });
 
 }
