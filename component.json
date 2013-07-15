@@ -1,0 +1,41 @@
+{
+	"name" : "JSV",
+  "repo": "garycourt/JSV",
+	"version" : "4.0.2",
+	"description" : "A JavaScript implementation of a extendable, fully compliant JSON Schema validator.",
+	"homepage" : "http://github.com/garycourt/JSV",
+	"author" : "Gary Court <gary.court@gmail.com>",
+	"licenses" : [
+		{
+			"type" : "FreeBSD",
+			"url" : "http://github.com/garycourt/JSV/raw/master/jsv.js"
+		}
+	],
+	"maintainers" : [
+		{
+			"name" : "Gary Court",
+			"email" : "gary.court@gmail.com"
+		}
+	],
+	"bugs" : {
+		"mail" : "gary.court@gmail.com",
+		"web" : "http://github.com/garycourt/JSV/issues"
+	},
+	"repositories" : [
+		{
+			"type" : "git",
+			"url" : "git://github.com/garycourt/JSV.git"
+		}
+	],
+	"dependencies" : [],
+	"main" : "lib/jsv.js",
+  "scripts": [
+    "lib/jsv.js",
+    "lib/uri/uri.js",
+    "lib/environments.js",
+    "lib/json-schema-draft-01.js",
+    "lib/json-schema-draft-02.js",
+    "lib/json-schema-draft-03.js"
+  ],
+	"keywords" : ["json", "schema", "validator"]
+}

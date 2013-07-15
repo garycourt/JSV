@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+  <head></head>
+  <body>
+    <script src="../build/build.js"></script>
+    <script>
+      var JSV = require("JSV").JSV;
+      var json = {};
+      var schema = {"type" : "object"};
+      var env = JSV.createEnvironment();
+      var report = env.validate({ a : 1 }, { type : 'object', properties : { a : { type : 'string' }} });
+      console.log(report);
+    </script>
+  </body>
+</html>
