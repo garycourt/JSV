@@ -20,12 +20,10 @@
 		"mail" : "gary.court@gmail.com",
 		"web" : "http://github.com/garycourt/JSV/issues"
 	},
-	"repositories" : [
-		{
-			"type" : "git",
-			"url" : "git://github.com/garycourt/JSV.git"
-		}
-	],
+	"repository" : {
+    "type" : "git",
+    "url" : "git://github.com/garycourt/JSV.git"
+  },
 	"dependencies" : [],
 	"main" : "lib/jsv.js",
 	"keywords" : ["json", "schema", "validator"]
