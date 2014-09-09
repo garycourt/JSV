@@ -61,6 +61,23 @@ The generated report would look like:
 		schemaSchema : [JSONSchema object]
 	}
 
+However, this is a teaching example. For an actual production app, here's a more performant way to produce the same effect:
+
+	var JSV = require("./jsv").JSV;
+	var json = {};
+	var schema_definition = {"type" : "object"};
+	var env = JSV.createEnvironment();
+	var schema = env.createSchema(schema_definition)
+	var report = schema.validate(json);
+
+	if (report.errors.length === 0) {
+		//JSON is valid against the schema
+	}
+
+This allows you to cache the schema, rather than re-interpreting it unnecessarily. `createSchema` registers the schema in the environment, so you can find it again later with:
+
+	env.findSchema(uri)
+
 ## Environments & JSON Schema support
 
 There is no one way to validate JSON, just like there is no one way to validate XML. Even the JSON Schema specification has gone through several revisions which are not 100% backwards compatible with each other. To solve the issue of using numerous schemas already written to older specifications, JSV provides customizable environments to validate your JSON within. 
