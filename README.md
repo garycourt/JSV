@@ -1,6 +1,9 @@
 JSV: JSON Schema Validator
 ==========================
 
+This solution is not actively maintained any longer. To find a JSON Schema validator take a look at these
+[benchmarks](https://github.com/Muscula/json-schema-benchmark).
+
 JSV is a JavaScript implementation of a extendable, fully compliant JSON Schema validator with the following features:
 
 *	The fastest extendable JSON validator available!
