@@ -4,12 +4,7 @@
 	"description" : "A JavaScript implementation of a extendable, fully compliant JSON Schema validator.",
 	"homepage" : "http://github.com/garycourt/JSV",
 	"author" : "Gary Court <gary.court@gmail.com>",
-	"licenses" : [
-		{
-			"type" : "FreeBSD",
-			"url" : "http://github.com/garycourt/JSV/raw/master/jsv.js"
-		}
-	],
+	"license": "BSD-2-Clause-FreeBSD",
 	"maintainers" : [
 		{
 			"name" : "Gary Court",
