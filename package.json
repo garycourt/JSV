@@ -1,32 +1,45 @@
 {
-	"name" : "JSV",
-	"version" : "4.0.2",
-	"description" : "A JavaScript implementation of a extendable, fully compliant JSON Schema validator.",
-	"homepage" : "http://github.com/garycourt/JSV",
-	"author" : "Gary Court <gary.court@gmail.com>",
-	"licenses" : [
-		{
-			"type" : "FreeBSD",
-			"url" : "http://github.com/garycourt/JSV/raw/master/jsv.js"
-		}
-	],
-	"maintainers" : [
-		{
-			"name" : "Gary Court",
-			"email" : "gary.court@gmail.com"
-		}
-	],
-	"bugs" : {
-		"mail" : "gary.court@gmail.com",
-		"web" : "http://github.com/garycourt/JSV/issues"
-	},
-	"repositories" : [
-		{
-			"type" : "git",
-			"url" : "git://github.com/garycourt/JSV.git"
-		}
-	],
-	"dependencies" : [],
-	"main" : "lib/jsv.js",
-	"keywords" : ["json", "schema", "validator"]
+  "name": "JSV",
+  "version": "4.0.2",
+  "description": "A JavaScript implementation of a extendable, fully compliant JSON Schema validator.",
+  "homepage": "http://github.com/garycourt/JSV",
+  "author": "Gary Court <gary.court@gmail.com>",
+  "scripts": {
+    "build": "npm run webpack && npm run uglify",
+    "webpack": "webpack --output-library=JSV --output-library-target=var  lib/jsv.js jsv-bundled.js",
+    "uglify": "uglifyjs jsv-bundled.js > jsv-bundled.min.js"
+  },
+  "licenses": [
+    {
+      "type": "FreeBSD",
+      "url": "http://github.com/garycourt/JSV/raw/master/jsv.js"
+    }
+  ],
+  "maintainers": [
+    {
+      "name": "Gary Court",
+      "email": "gary.court@gmail.com"
+    }
+  ],
+  "bugs": {
+    "mail": "gary.court@gmail.com",
+    "web": "http://github.com/garycourt/JSV/issues"
+  },
+  "repositories": [
+    {
+      "type": "git",
+      "url": "git://github.com/garycourt/JSV.git"
+    }
+  ],
+  "dependencies": [],
+  "main": "lib/jsv.js",
+  "keywords": [
+    "json",
+    "schema",
+    "validator"
+  ],
+  "devDependencies": {
+    "uglify-js": "^2.6.2",
+    "webpack": "^2.1.0-beta.2"
+  }
 }
