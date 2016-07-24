@@ -25,41 +25,47 @@ A **JSON validator** is a program that takes JSON data and, with a provided sche
 
 Here's an example on how to validate some JSON with JSV:
 
-	var JSV = require("./jsv").JSV;
-	var json = {};
-	var schema = {"type" : "object"};
-	var env = JSV.createEnvironment();
-	var report = env.validate(json, schema);
+```js
+var JSV = require("./jsv").JSV;
+var json = {};
+var schema = {"type" : "object"};
+var env = JSV.createEnvironment();
+var report = env.validate(json, schema);
 	
-	if (report.errors.length === 0) {
-		//JSON is valid against the schema
-	}
+if (report.errors.length === 0) {
+	//JSON is valid against the schema
+}
+```
 
 Another example; for the following test:
 
-	env.validate({ a : 1 }, { type : 'object', properties : { a : { type : 'string' }} });
+```js
+env.validate({ a : 1 }, { type : 'object', properties : { a : { type : 'string' }} });
+```
 
 The generated report would look like:
 
-	{
-		errors : [
-			{
-				message : "Instance is not a required type",
-				uri : "urn:uuid:74b843b5-3aa4-44e9-b7bc-f555936fa823#/a",
-				schemaUri : "urn:uuid:837fdefe-3bd4-4993-9a20-38a6a0624d5a#/properties/a",
-				attribute : "type",
-				details : ["string"]
-			}
-		],
-		validated : {
-			"urn:uuid:74b843b5-3aa4-44e9-b7bc-f555936fa823#" : ["urn:uuid:837fdefe-3bd4-4993-9a20-38a6a0624d5a#"],
-			"urn:uuid:74b843b5-3aa4-44e9-b7bc-f555936fa823#/a" : ["urn:uuid:837fdefe-3bd4-4993-9a20-38a6a0624d5a#/properties/a"],
-			//...
-		},
-		instance : [JSONInstance object],
-		schema : [JSONSchema object],
-		schemaSchema : [JSONSchema object]
-	}
+```js
+{
+	errors : [
+		{
+			message : "Instance is not a required type",
+			uri : "urn:uuid:74b843b5-3aa4-44e9-b7bc-f555936fa823#/a",
+			schemaUri : "urn:uuid:837fdefe-3bd4-4993-9a20-38a6a0624d5a#/properties/a",
+			attribute : "type",
+			details : ["string"]
+		}
+	],
+	validated : {
+		"urn:uuid:74b843b5-3aa4-44e9-b7bc-f555936fa823#" : ["urn:uuid:837fdefe-3bd4-4993-9a20-38a6a0624d5a#"],
+		"urn:uuid:74b843b5-3aa4-44e9-b7bc-f555936fa823#/a" : ["urn:uuid:837fdefe-3bd4-4993-9a20-38a6a0624d5a#/properties/a"],
+		//...
+	},
+	instance : [JSONInstance object],
+	schema : [JSONSchema object],
+	schemaSchema : [JSONSchema object]
+}
+```
 
 ## Environments & JSON Schema support
 
@@ -124,33 +130,35 @@ An array of error objects from the validation process; each object represents a 
 
 The error objects have the following schema:
 
-	{
-		"type" : "object",
-		"properties" : {
-			"message" : {
-				"description" : "A user-friendly error message about what failed to validate.",
-				"type" : "string"
-			},
-			"uri" : {
-				"description" : "URI of the instance that failed to validate.",
-				"type" : "string",
-				"format" : "uri"
-			},
-			"schemaUri" : {
-				"description" : "URI of the schema instance that reported the error.",
-				"type" : "string",
-				"format" : "uri"
-			},
-			"attribute" : {
-				"description" : "The attribute of the schema instance that failed to validate.",
-				"type" : "string"
-			},
-			"details" : {
-				"description" : "The value of the schema attribute that failed to validate.",
-				"type" : "any"
-			}
+```js
+{
+	"type" : "object",
+	"properties" : {
+		"message" : {
+			"description" : "A user-friendly error message about what failed to validate.",
+			"type" : "string"
+		},
+		"uri" : {
+			"description" : "URI of the instance that failed to validate.",
+			"type" : "string",
+			"format" : "uri"
+		},
+		"schemaUri" : {
+			"description" : "URI of the schema instance that reported the error.",
+			"type" : "string",
+			"format" : "uri"
+		},
+		"attribute" : {
+			"description" : "The attribute of the schema instance that failed to validate.",
+			"type" : "string"
+		},
+		"details" : {
+			"description" : "The value of the schema attribute that failed to validate.",
+			"type" : "any"
 		}
 	}
+}
+```
 
 ## API Documentation
 
@@ -166,15 +174,21 @@ Details and instruction on this feature will be provided at a later date.
 
 The preferred method of installation is to download the latest copy from GitHub:
 
-	git clone git://github.com/garycourt/JSV.git
+```bash
+git clone git://github.com/garycourt/JSV.git
+```
 
 If you are using JSV within Node.js, you can quickly install it using:
 
-	npm install JSV
+```bash
+npm install JSV
+```
 
 Then you can reference it within your application using:
 
-	var JSV = require("JSV").JSV;
+```js
+var JSV = require("JSV").JSV;
+```
 
 ## Unit Tests
 
