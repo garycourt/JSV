@@ -4,7 +4,7 @@ JSV: JSON Schema Validator
 JSV is a JavaScript implementation of a extendable, fully compliant JSON Schema validator with the following features:
 
 *	The fastest extendable JSON validator available!
-*	Complete implementation of all current JSON Schema draft revisions.
+*	Complete implementation of all JSON Schema versions up to draft 3 (draft-zyp-json-schema-03).
 *	Supports creating individual environments (sandboxes) that validate using a particular schema specification.
 *	Provides an intuitive API for creating new validating schema attributes, or whole new custom schema schemas.
 *	Supports `self`, `full` and `describedby` hyper links.
